@@ -1,5 +1,7 @@
 ﻿import React, { useEffect, useState } from "react";
 import "./AtlasDashboard.css";
+import Panel from "../components/Panel.jsx";
+import StatCard from "../components/StatCard.jsx";
 
 const inspiringQuotes = [
   "Hoy es un buen día para aprender algo nuevo.",
@@ -17,6 +19,9 @@ export default function AtlasDashboard({
   ask,
 }) {
   const [dailyQuote, setDailyQuote] = useState("");
+  const [messages, setMessages] = useState([
+    { id: 1, author: "Atlas", role: "assistant", text: "Hola — soy Atlas, tu Centro Inteligente de Aprendizaje. ¿En qué puedo ayudarte hoy?" },
+  ]);
 
   useEffect(() => {
     const today = new Date().getDate();
@@ -24,6 +29,15 @@ export default function AtlasDashboard({
       inspiringQuotes[today % inspiringQuotes.length]
     );
   }, []);
+
+  useEffect(() => {
+    if (result) {
+      setMessages((m) => [
+        ...m,
+        { id: Date.now(), author: "Atlas", role: "assistant", text: String(result) },
+      ]);
+    }
+  }, [result]);
 
   const metrics = [
     {
@@ -51,178 +65,143 @@ export default function AtlasDashboard({
   return (
     <div className="atlas-dashboard">
 
-      <section className="atlas-hero">
-
-        <div className="atlas-avatar">
-          <div className="avatar-gradient"></div>
-          <span className="avatar-icon">
-            ✨
-          </span>
+      <div className="atlas-page-header">
+        <div>
+          <p className="atlas-eyebrow">ATLAS IA</p>
+          <h1 className="atlas-title-main">Tablero de recomendaciones inteligentes</h1>
+          <p className="atlas-subtext">Atlas analiza tu ritmo y te propone las prioridades de estudio del día para avanzar con confianza.</p>
         </div>
+      </div>
 
-        <div className="atlas-header-text">
-          <h1 className="atlas-title">
-            Atlas
-          </h1>
-
-          <p className="atlas-subtitle">
-            Tu compañero inteligente de aprendizaje
-          </p>
-
-          <p className="atlas-quote">
-            "{dailyQuote}"
-          </p>
-        </div>
-
-      </section>
-
-
-      <section className="metrics-grid">
-
-        {metrics.map((metric, index) => (
-          <div
-            className="metric-card"
-            key={index}
-          >
-            <span className="metric-icon">
-              {metric.icon}
-            </span>
-
-            <div>
-              <h3>
-                {metric.value}
-              </h3>
-
-              <p>
-                {metric.label}
-              </p>
+      <div className="atlas-top-grid">
+        <Panel className="atlas-hero-card">
+          <div className="atlas-hero-card-top">
+            <div className="atlas-avatar-card">
+              <div className="avatar-icon-large">🤖</div>
             </div>
 
+            <div className="atlas-hero-copy">
+              <div className="atlas-hero-pill">Plan recomendado</div>
+              <p className="atlas-hero-label">Atlas</p>
+              <h2 className="atlas-hero-title">Tu compañero inteligente de aprendizaje</h2>
+              <p className="atlas-hero-description">¡Hola! Revisé tu progreso de ayer y creo que hoy sería perfecto repasar Álgebra Lineal. Estás muy cerca de completarlo.</p>
+
+              <div className="atlas-hero-badges">
+                <span>20 min</span>
+                <span>Racha +12</span>
+                <span>Nivel 8</span>
+              </div>
+
+              <p className="atlas-hero-quote">"{dailyQuote}"</p>
+            </div>
+
+            <span className="atlas-badge">En línea</span>
           </div>
+
+          <div className="atlas-chat-hero">
+            <div className="atlas-chat-card">
+              <div className="atlas-chat-card-header">
+                <div className="atlas-chat-card-avatar">🤖</div>
+                <div>
+                  <p className="atlas-chat-card-title">Atlas</p>
+                  <p className="atlas-chat-card-subtitle">Tus recomendaciones personalizadas</p>
+                </div>
+              </div>
+
+              <div className="atlas-chat-feed">
+                {messages.map((message) => (
+                  <div key={message.id} className={`atlas-message ${message.role === 'assistant' ? 'assistant' : 'user'}`}>
+                    <div className="atlas-message-bubble">
+                      <p>{message.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="atlas-action-buttons">
+              <button className="atlas-action-pill atlas-action-primary">Continuar donde dejé</button>
+              <button className="atlas-action-pill">Quiz rápido</button>
+              <button className="atlas-action-pill">Explorar cursos</button>
+            </div>
+          </div>
+
+          <div className="atlas-input-row">
+            <input
+              className="atlas-input"
+              type="text"
+              placeholder="Pregúntale a Atlas algo..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+            />
+            <button
+              className="atlas-input-button"
+              onClick={() => {
+                if (!question.trim()) return;
+                setMessages((m) => [...m, { id: Date.now(), author: 'Tú', role: 'user', text: question }]);
+                ask();
+                setQuestion('');
+              }}
+              disabled={loading}
+            >
+              ➤
+            </button>
+          </div>
+        </Panel>
+
+        <Panel className="atlas-suggestions-panel">
+          <div className="atlas-suggestions-header">
+            <div>
+              <p className="small-label">Atlas te sugiere hoy</p>
+              <h3>Basado en tu ritmo de aprendizaje</h3>
+            </div>
+            <button className="atlas-link-button">Ver todas →</button>
+          </div>
+
+          <div className="atlas-suggestion-card highlight-card">
+            <div>
+              <p className="suggestion-label">Repasar Álgebra Lineal</p>
+              <p className="suggestion-subtitle">20 min · Prioritario</p>
+            </div>
+            <div className="progress-pill">
+              <span>45%</span>
+            </div>
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: '45%' }} />
+            </div>
+            <button className="atlas-suggestion-cta">¡Empecemos! →</button>
+          </div>
+
+          <div className="atlas-suggestion-card">
+            <div className="suggestion-chip">Física</div>
+            <p className="suggestion-title">Cinemática</p>
+            <p className="suggestion-meta">Práctica de 15 min</p>
+          </div>
+
+          <div className="atlas-suggestion-card">
+            <div className="suggestion-chip suggestion-chip-alt">Programación</div>
+            <p className="suggestion-title">Desafío de Programación</p>
+            <p className="suggestion-meta">Desafío de 10 min</p>
+          </div>
+
+          <div className="atlas-advice-card">
+            <div className="atlas-advice-header">
+              <span className="atlas-advice-icon">💡</span>
+              <div>
+                <p className="small-label">CONSEJO DE ATLAS</p>
+                <p className="atlas-advice-title">Multiplica tu racha</p>
+              </div>
+            </div>
+            <p>Completar Álgebra Lineal ahora te da un multiplicador de racha de <strong>1.5x</strong> por el resto de la tarde. ¡Aprovéchalo!</p>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="atlas-stats-grid">
+        {metrics.map((m, i) => (
+          <StatCard key={i} label={m.label} value={m.value} detail={m.icon} />
         ))}
-
-      </section>
-
-
-      <section className="atlas-chat">
-
-        <h2>
-          Pregúntale a Atlas 🤖
-        </h2>
-
-
-        <textarea
-          value={question}
-          onChange={(e) =>
-            setQuestion(e.target.value)
-          }
-          placeholder="Escribe tu pregunta..."
-        />
-
-
-        <button
-          onClick={ask}
-          disabled={loading}
-        >
-          {loading
-            ? "Pensando..."
-            : "Consultar Atlas"}
-        </button>
-
-
-        {result && (
-          <div className="atlas-response">
-            <h3>
-              Respuesta de Atlas
-            </h3>
-
-            <p>
-              {result}
-            </p>
-          </div>
-        )}
-
-      </section>
-
-
-      <aside className="atlas-sidebar">
-
-
-        <div className="sidebar-card">
-
-          <h3>
-            📅 Próximamente
-          </h3>
-
-          <ul>
-
-            <li>
-              📚 2 clases pendientes
-            </li>
-
-            <li>
-              📝 Tarea de Matemáticas
-            </li>
-
-            <li>
-              ⏰ Física - 08:30 a.m.
-            </li>
-
-          </ul>
-
-        </div>
-
-
-
-        <div className="sidebar-card">
-
-          <h3>
-            🎯 Objetivos de hoy
-          </h3>
-
-          <p>
-            ○ Completar lección de Álgebra
-          </p>
-
-          <p>
-            ○ Resolver 5 ejercicios
-          </p>
-
-          <p>
-            ✓ Revisar retroalimentación
-          </p>
-
-        </div>
-
-
-
-        <div className="sidebar-card">
-
-          <h3>
-            🏆 Logros recientes
-          </h3>
-
-          <div className="achievements-grid">
-
-            <span>
-              🟢 Constante
-            </span>
-
-            <span>
-              📘 Dedicado
-            </span>
-
-            <span>
-              🎯 Enfocado
-            </span>
-
-          </div>
-
-        </div>
-
-
-      </aside>
-
+      </div>
 
     </div>
   );

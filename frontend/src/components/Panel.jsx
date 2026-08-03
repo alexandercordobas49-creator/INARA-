@@ -1,7 +1,11 @@
-export default function Panel({ title, children }) {
+export default function Panel({ title, children, className = '' }) {
   return (
-    <section className="rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-6 shadow-[0_20px_55px_-24px_rgba(15,23,42,0.35)] backdrop-blur transition-shadow duration-300 hover:shadow-[0_24px_60px_-22px_rgba(15,23,42,0.4)]">
-      {title && <h3 className="mb-6 text-xl font-bold text-slate-900">{title}</h3>}
+    <section className={`overflow-hidden rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm transition duration-300 hover:shadow-md ${className}`}>
+      {title && (
+        <div className="mb-6 rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4">
+          <h3 className="text-lg font-semibold tracking-[-0.02em] text-slate-950">{title}</h3>
+        </div>
+      )}
       {children}
     </section>
   );

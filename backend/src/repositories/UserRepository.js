@@ -95,3 +95,17 @@ export async function createUser(user) {
 
     return result.rows[0];
 }
+
+export async function updatePasswordByEmail(email, password_hash) {
+    const result = await pool.query(
+        `
+        UPDATE users
+        SET password_hash=$1, updated_at=now()
+        WHERE email=$2
+        RETURNING *
+        `,
+        [password_hash, email]
+    );
+
+    return result.rows[0];
+}

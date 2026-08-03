@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { roles } from '../models/User.js';
-import { createUser, findUserByEmail } from '../repositories/UserRepository.js';
+import { createUser, findUserByEmail, updatePasswordByEmail } from '../repositories/UserRepository.js';
 import { signToken } from '../middleware/authMiddleware.js';
 
 const SALT_ROUNDS = 10;
@@ -116,4 +117,42 @@ export async function register(req, res) {
 
   });
 
+}
+
+export async function forgotPassword(req, res) {
+  const { email } = req.body;
+  const user = await findUserByEmail(email);
+  // For demo/dev: generate a token and return it in response (simulate email)
+  const token = crypto.randomBytes(20).toString('hex');
+
+  if (!user) {
+    // Do not reveal whether user exists
+    return res.json({ message: 'Si el correo existe, recibirás instrucciones para restablecer la contraseña.' });
+  }
+
+  // In a real app: store the token and expiry, send email with link
+  return res.json({ message: 'Token generado (dev):', token });
+}
+
+export async function resetPassword(req, res) {
+  const { email, token, password } = req.body;
+
+  if (!password || password.length < 8) {
+    return res.status(400).json({ message: 'La contraseña debe tener al menos 8 caracteres' });
+  }
+
+  const user = await findUserByEmail(email);
+  if (!user) {
+    return res.status(400).json({ message: 'Usuario no encontrado' });
+  }
+
+  // In a real app: verify the token. Here we accept any token for dev purposes.
+  const hashed = await bcrypt.hash(password, 10);
+  const updated = await updatePasswordByEmail(email, hashed);
+
+  if (!updated) {
+    return res.status(500).json({ message: 'Error actualizando la contraseña' });
+  }
+
+  return res.json({ message: 'Contraseña restablecida correctamente' });
 }

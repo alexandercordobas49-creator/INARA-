@@ -7,8 +7,10 @@ import { pool } from '../config/database.js';
 export async function listAttendance(req, res) {
 
   try {
-
-    const records = await AttendanceRepository.findAll();
+    const { userId } = req.query;
+    const records = userId
+      ? await AttendanceRepository.findByStudent(userId)
+      : await AttendanceRepository.findAll();
 
     return res.json(records);
 

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "setup:test-db": "node scripts/setup_test_db.js",
+    "test": "vitest"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -16,5 +18,9 @@
     "nodemailer": "^6.9.4",
     "pg": "^8.22.0",
     "twilio": "^4.17.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.1",
+    "supertest": "^6.3.3"
   }
 }

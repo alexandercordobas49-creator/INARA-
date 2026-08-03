@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api.js';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppShell from './components/AppShell.jsx';
 import Achievements from './pages/Achievements.jsx';
 import Atlas from './pages/Atlas.jsx';
@@ -10,9 +11,10 @@ import Courses from './pages/Courses.jsx';
 import Goals from './pages/Goals.jsx';
 import Rewards from './pages/Rewards.jsx';
 import Community from './pages/Community.jsx';
+import PlatformInfo from './pages/PlatformInfo.jsx';
+import Attendance from './pages/Attendance.jsx';
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState('auth');
   const [session, setSession] = useState(() => {
     const saved = localStorage.getItem('INARA-session');
     return saved ? JSON.parse(saved) : null;
@@ -38,14 +40,12 @@ export default function App() {
   function saveSession(nextSession) {
     setSession(nextSession);
     localStorage.setItem('INARA-session', JSON.stringify(nextSession));
-    setActiveModule('dashboard');
     reload();
   }
 
   function logout() {
     setSession(null);
     localStorage.removeItem('INARA-session');
-    setActiveModule('auth');
   }
 
   function reload() {
@@ -57,20 +57,24 @@ export default function App() {
   const pageProps = { session, users, courses, selectedStudent, reload };
 
   return (
-    <AppShell
-      activeModule={activeModule}
-      onSelectModule={setActiveModule}
-      session={session}
-      onLogout={logout}
-    >
-      {activeModule === 'auth' && <Auth onSession={saveSession} />}
-      {activeModule === 'dashboard' && <Dashboard {...pageProps} />}
-      {activeModule === 'progress' && <Progress {...pageProps} />}
-      {activeModule === 'courses' && <Courses {...pageProps} />}
-      {activeModule === 'goals' && <Goals {...pageProps} />}
-      {activeModule === 'rewards' && <Rewards {...pageProps} />}
-      {activeModule === 'atlas' && <Atlas />}
-      {activeModule === 'community' && <Community {...pageProps} />}
-    </AppShell>
+    <BrowserRouter>
+      <AppShell session={session} onLogout={logout}>
+        <Routes>
+          <Route path="/auth" element={<Auth onSession={saveSession} />} />
+          <Route path="/dashboard" element={<Dashboard {...pageProps} />} />
+          <Route path="/progress" element={<Progress {...pageProps} />} />
+          <Route path="/courses" element={<Courses {...pageProps} />} />
+          <Route path="/goals" element={<Goals {...pageProps} />} />
+          <Route path="/rewards" element={<Rewards {...pageProps} />} />
+          <Route path="/atlas" element={<Atlas {...pageProps} />} />
+          <Route path="/attendance" element={<Attendance {...pageProps} />} />
+          <Route path="/platform" element={<PlatformInfo {...pageProps} />} />
+          <Route path="/community" element={<Community {...pageProps} />} />
+          <Route path="/achievements" element={<Achievements {...pageProps} />} />
+          <Route path="/" element={<Navigate to={session ? '/dashboard' : '/auth'} replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AppShell>
+    </BrowserRouter>
   );
 }

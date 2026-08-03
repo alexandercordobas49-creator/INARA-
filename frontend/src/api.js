@@ -60,3 +60,20 @@ export async function api(path, options = {}) {
     throw error;
   }
 }
+
+export function notify(type, text, timeout = 4000) {
+  try {
+    // If React provider set a global helper, prefer it (returns id)
+    if (typeof window.__inara_notify === 'function') {
+      try {
+        return window.__inara_notify(type, text, timeout);
+      } catch (e) {
+        // fallback to DOM event below
+      }
+    }
+
+    window.dispatchEvent(new CustomEvent('inara-toast', { detail: { type, text, timeout } }));
+  } catch (e) {
+    // ignore
+  }
+}

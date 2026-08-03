@@ -81,53 +81,51 @@ export default function Dashboard({ selectedStudent, session }) {
   const xpEvents = dashboard?.xpEvents || [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-4xl font-black text-slate-900">
+        <h1 className="text-5xl font-extrabold text-neutral-900">
           ¡Bienvenida de nuevo, {selectedStudent.firstName}! 👋
         </h1>
-        <p className="text-slate-600 font-medium">
+        <p className="text-neutral-500 text-lg">
           Cada paso que das hoy, te acerca al futuro que sueñas.
         </p>
       </div>
 
       {/* Progreso General */}
-      <div className="rounded-3xl bg-gradient-to-r from-teal-600 to-teal-700 p-8 text-white relative overflow-hidden shadow-xl">
-        <div className="relative z-10 grid md:grid-cols-2 gap-8">
+      <div className="rounded-2xl bg-white p-10 border border-neutral-100 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.06)] relative overflow-hidden">
+        <div className="relative z-10 grid md:grid-cols-2 gap-10">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider opacity-90 mb-2">
+            <p className="text-sm font-semibold uppercase tracking-wider text-success-600 mb-3">
               Tu progreso general
             </p>
-            <p className="text-6xl font-black mb-4">{progressPercentage}%</p>
-            <p className="text-sm opacity-90 font-semibold">¡Vas por un excelente camino!</p>
-            <div className="mt-4 h-3 bg-white/20 rounded-full overflow-hidden">
+            <p className="text-7xl font-extrabold mb-4 text-neutral-900">{progressPercentage}%</p>
+            <p className="text-sm text-neutral-500 font-semibold">¡Vas por un excelente camino!</p>
+            <div className="mt-6 h-3 bg-neutral-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-white to-emerald-300 transition-all duration-700"
+                className="h-full bg-gradient-to-r from-success-500 to-success-400 transition-all duration-700"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/20 rounded-2xl p-4 backdrop-blur text-center">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl mb-2">📚</p>
-              <p className="text-xs font-semibold opacity-90">Clases completadas</p>
-              <p className="text-2xl font-black mt-2">18 / 25</p>
+              <p className="text-xs font-semibold text-neutral-500">Clases completadas</p>
+              <p className="text-2xl font-extrabold mt-2 text-neutral-900">18 / 25</p>
             </div>
-            <div className="bg-white/20 rounded-2xl p-4 backdrop-blur text-center">
+            <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl mb-2">🔥</p>
-              <p className="text-xs font-semibold opacity-90">Racha más larga</p>
-              <p className="text-2xl font-black mt-2">{streak} días</p>
+              <p className="text-xs font-semibold text-neutral-500">Racha más larga</p>
+              <p className="text-2xl font-extrabold mt-2 text-neutral-900">{streak} días</p>
             </div>
-            <div className="bg-white/20 rounded-2xl p-4 backdrop-blur text-center">
+            <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl mb-2">🏆</p>
-              <p className="text-xs font-semibold opacity-90">Logros obtenidos</p>
-              <p className="text-2xl font-black mt-2">{achievements.length}</p>
+              <p className="text-xs font-semibold text-neutral-500">Logros obtenidos</p>
+              <p className="text-2xl font-extrabold mt-2 text-neutral-900">{achievements.length}</p>
             </div>
           </div>
         </div>
-
-
       </div>
 
       {/* Tus clases de hoy */}
@@ -136,13 +134,13 @@ export default function Dashboard({ selectedStudent, session }) {
           <h2 className="text-2xl font-bold text-slate-900">Tus clases de hoy</h2>
           <a href="#" className="text-emerald-600 font-semibold hover:underline">Ver todas</a>
         </div>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           {[
             { name: 'Matemáticas', topic: 'Funciones cuadráticas', progress: 80, icon: '∫', color: 'from-blue-500 to-purple-600' },
             { name: 'Química', topic: 'Enlaces químicos', progress: 60, icon: '⚗️', color: 'from-yellow-500 to-orange-600' },
             { name: 'Historia', topic: 'Revolución Industrial', progress: 40, icon: '📖', color: 'from-emerald-500 to-teal-600' }
           ].map((course, idx) => (
-            <div key={idx} className="rounded-2xl bg-white p-6 shadow-lg hover:shadow-xl transition-all border border-slate-200">
+            <div key={idx} className="rounded-2xl bg-white p-8 shadow-sm hover:shadow-md transition-all border border-neutral-100">
               <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${course.color} text-white flex items-center justify-center text-2xl mb-4 font-bold`}>
                 {course.icon}
               </div>
@@ -155,7 +153,7 @@ export default function Dashboard({ selectedStudent, session }) {
                 </div>
                 <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-600 transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-success-500 to-success-400 transition-all duration-500"
                     style={{ width: `${course.progress}%` }}
                   />
                 </div>
@@ -168,7 +166,7 @@ export default function Dashboard({ selectedStudent, session }) {
       {/* Meta y Actividad */}
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Meta del mes */}
-        <div className="lg:col-span-1 rounded-2xl bg-white p-6 shadow-lg border border-slate-200">
+        <div className="lg:col-span-1 rounded-2xl bg-white p-8 shadow-sm border border-neutral-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               🎯 Meta del mes
@@ -176,22 +174,22 @@ export default function Dashboard({ selectedStudent, session }) {
           </div>
           <div className="space-y-6">
             <div>
-              <p className="text-sm font-semibold text-slate-700 mb-2">Completar 20 clases</p>
-              <p className="text-sm text-slate-600 mb-3">Vas por 18/20 clases completadas</p>
-              <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+              <p className="text-sm font-semibold text-neutral-700 mb-2">Completar 20 clases</p>
+              <p className="text-sm text-neutral-500 mb-3">Vas por 18/20 clases completadas</p>
+              <div className="h-3 bg-neutral-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-cyan-600"
+                  className="h-full bg-gradient-to-r from-success-500 to-success-400"
                   style={{ width: '90%' }}
                 />
               </div>
             </div>
-            <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-cyan-50 p-6 text-center border border-emerald-200">
-              <p className="text-4xl font-black text-emerald-600">90%</p>
-              <p className="text-xs text-slate-600 mt-2">Completado</p>
+            <div className="rounded-2xl bg-white p-6 text-center border border-neutral-100 shadow-sm">
+              <p className="text-4xl font-extrabold text-success-600">90%</p>
+              <p className="text-xs text-neutral-500 mt-2">Completado</p>
             </div>
-            <div className="rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 text-center">
+            <div className="rounded-xl bg-white p-4 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl">🎁</p>
-              <p className="text-xs font-semibold text-slate-700 mt-2">Recompensa disponible</p>
+              <p className="text-xs font-semibold text-neutral-700 mt-2">Recompensa disponible</p>
             </div>
           </div>
         </div>
@@ -201,20 +199,22 @@ export default function Dashboard({ selectedStudent, session }) {
           {/* Asistente IA */}
           <div className="rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 p-6 border border-slate-200">
             <div className="flex items-start gap-4">
-              <div className="text-5xl">🤖</div>
+              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white p-2">
+                <img src="/assets/atlas/robot-smile.svg" alt="Atlas" className="w-full h-full object-contain" />
+              </div>
               <div className="flex-1">
                 <h4 className="font-bold text-slate-900 mb-2">Asistente IA</h4>
                 <p className="text-sm text-slate-600 mb-4">¡Hola Valeria! 👋</p>
                 <p className="text-sm text-slate-600 mb-4">¿En qué puedo ayudarte hoy?</p>
                 <div className="flex gap-2">
                   <button className="text-xs px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
-                    📖 Explicame un tema
+                    Explicame un tema
                   </button>
                   <button className="text-xs px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
-                    💡 Dame consejos
+                    Dame consejos
                   </button>
                   <button className="text-xs px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold">
-                    🎯 Motivame
+                    Motivame
                   </button>
                 </div>
               </div>

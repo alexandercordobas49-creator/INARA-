@@ -1,9 +1,13 @@
 export default function ModuleHeader({ eyebrow, title, description }) {
   return (
-    <div className="mb-6 max-w-3xl rounded-[2rem] border border-slate-200/80 bg-white/70 p-6 shadow-[0_18px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur">
-      <p className="mb-2 text-sm font-bold uppercase tracking-[0.3em] text-emerald-600">{eyebrow}</p>
-      <h2 className="text-3xl font-black text-slate-900 sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-lg leading-8 font-medium text-slate-600">{description}</p>
+    <div className="mb-8 w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm transition-shadow duration-300 hover:shadow-md">
+      {eyebrow && (
+        <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
+          {eyebrow}
+        </span>
+      )}
+      <h2 className="mt-4 text-4xl font-extrabold tracking-[-0.04em] text-slate-950 sm:text-5xl">{title}</h2>
+      <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">{description}</p>
     </div>
   );
 }
