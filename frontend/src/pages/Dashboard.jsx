@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import Modal from '../components/Modal.jsx';
 import { api } from '../api.js';
 
 export default function Dashboard({ selectedStudent, session }) {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [modal, setModal] = useState(null);
 
   const mockData = {
     xp: { total: 2450, currentLevel: 8, progressToNextLevel: 72 },
@@ -80,14 +82,90 @@ export default function Dashboard({ selectedStudent, session }) {
   const achievements = dashboard?.achievements || [];
   const xpEvents = dashboard?.xpEvents || [];
 
+  // Handlers
+  const handleViewProgress = () => {
+    setModal({
+      type: 'info',
+      title: 'Detalles del Progreso',
+      message: `📊 Nivel Actual: ${currentLevel}\n\n⭐ XP Total: ${xpTotal.toLocaleString()}\n\n📈 Progreso al siguiente nivel: ${progressPercentage}%\n\nSigue ganando XP para alcanzar el nivel 9. ¡Te falta poco!`,
+      actions: [
+        {
+          label: 'Continuar aprendiendo',
+          primary: true,
+          handler: () => {}
+        }
+      ],
+      isOpen: true
+    });
+  };
+
+  const handleViewAchievements = () => {
+    setModal({
+      type: 'info',
+      title: `${achievements.length} Logros Desbloqueados`,
+      message: achievements.length > 0
+        ? achievements.map((a) => `🏆 ${a.achievement.name} - ${a.achievement.description}`).join('\n')
+        : 'Aún no has desbloqueado logros. ¡Sigue participando para lograrlo!',
+      actions: [
+        {
+          label: 'Ver todos los logros',
+          primary: true,
+          handler: () => window.location.href = '/achievements'
+        }
+      ],
+      isOpen: true
+    });
+  };
+
+  const handleViewAttendance = () => {
+    setModal({
+      type: 'info',
+      title: 'Resumen de Asistencia',
+      message: `✅ Total de asistencias: ${dashboard?.attendanceSummary?.total || 0}\n\n👤 Presente: ${dashboard?.attendanceSummary?.present || 0}\n\n📊 Tasa de asistencia: ${attendanceRate}%\n\n¡Mantén tu asistencia alta para acceder a bonificaciones especiales!`,
+      actions: [
+        {
+          label: 'Ir a Asistencia',
+          primary: true,
+          handler: () => window.location.href = '/attendance'
+        }
+      ],
+      isOpen: true
+    });
+  };
+
+  const handleViewRacha = () => {
+    setModal({
+      type: 'success',
+      title: `¡Racha de ${streak} días!`,
+      message: `🔥 Vas en una racha de ${streak} días consecutivos.\n\nCada día que no rompas tu racha:\n✓ Ganas XP bonus\n✓ Tu multiplicador sube\n✓ Desbloqueas recompensas\n\n¡Sigue así, no pierdas la racha hoy!`,
+      actions: [
+        {
+          label: 'Ir a aprender',
+          primary: true,
+          handler: () => {}
+        }
+      ],
+      isOpen: true
+    });
+  };
+
   return (
+    <>
+      <Modal
+        isOpen={modal?.isOpen || false}
+        title={modal?.title || ''}
+        message={modal?.message || ''}
+        type={modal?.type || 'info'}
+        actions={modal?.actions}
+        onClose={() => setModal(null)}
+      />
     <div className="space-y-12">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-5xl font-extrabold text-neutral-900">
-          ¡Bienvenida de nuevo, {selectedStudent.firstName}! 👋
+      <div className="mb-8">
+        <h1 className="text-5xl font-black bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-3">
+          ¡Bienvenida de nuevo, {selectedStudent.firstName}!
         </h1>
-        <p className="text-neutral-500 text-lg">
+        <p className="text-lg text-slate-600 font-medium">
           Cada paso que das hoy, te acerca al futuro que sueñas.
         </p>
       </div>
@@ -225,7 +303,7 @@ export default function Dashboard({ selectedStudent, session }) {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-bold text-slate-900 flex items-center gap-2">📈 Actividad reciente</h4>
-              <a href="#" className="text-xs text-emerald-600 font-semibold hover:underline">Ver toda la actividad</a>
+              <button onClick={handleViewProgress} className="text-xs text-emerald-600 font-semibold hover:underline cursor-pointer">Ver toda la actividad</button>
             </div>
             <div className="space-y-3">
               {[
@@ -250,7 +328,7 @@ export default function Dashboard({ selectedStudent, session }) {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">🏆 Logros recientes</h2>
-          <a href="#" className="text-emerald-600 font-semibold hover:underline">Ver todos</a>
+          <button onClick={handleViewAchievements} className="text-emerald-600 font-semibold hover:underline cursor-pointer">Ver todos</button>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
@@ -279,5 +357,6 @@ export default function Dashboard({ selectedStudent, session }) {
         </div>
       </div>
     </div>
+    </>
   );
 }
