@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
+import Modal from "../components/Modal.jsx";
 import "./AtlasDashboard.css";
 import Panel from "../components/Panel.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -22,6 +23,7 @@ export default function AtlasDashboard({
   const [messages, setMessages] = useState([
     { id: 1, author: "Atlas", role: "assistant", text: "Hola — soy Atlas, tu Centro Inteligente de Aprendizaje. ¿En qué puedo ayudarte hoy?" },
   ]);
+  const [modal, setModal] = useState(null);
 
   useEffect(() => {
     const today = new Date().getDate();
@@ -62,14 +64,87 @@ export default function AtlasDashboard({
     },
   ];
 
+  // Handlers
+  const handleContinue = () => {
+    setModal({
+      type: 'info',
+      title: 'Reanudar Álgebra Lineal',
+      message: 'Se abrirá la última lección donde dejaste: "Sistemas de ecuaciones lineales". Vas al 45% del progreso.',
+      actions: [
+        {
+          label: 'Comenzar',
+          primary: true,
+          handler: () => {}
+        }
+      ],
+      isOpen: true
+    });
+  };
+
+  const handleQuiz = () => {
+    setModal({
+      type: 'info',
+      title: 'Quiz Rápido - 5 min',
+      message: 'Demuestra lo que sabes sobre los temas de esta semana. Recibirás XP y multiplica tu racha.',
+      actions: [
+        {
+          label: 'Comenzar Quiz',
+          primary: true,
+          handler: () => {}
+        }
+      ],
+      isOpen: true
+    });
+  };
+
+  const handleExploreCourses = () => {
+    setModal({
+      type: 'info',
+      title: 'Explorar Cursos',
+      message: 'Tenemos 85 cursos disponibles en todas las áreas. Filtra por materia, dificultad o tiempo disponible.',
+      actions: [
+        {
+          label: 'Ver Catálogo',
+          primary: true,
+          handler: () => {}
+        }
+      ],
+      isOpen: true
+    });
+  };
+
+  const handleSuggestionCTA = () => {
+    setModal({
+      type: 'success',
+      title: '¡Excelente decisión!',
+      message: 'Comenzarás con Álgebra Lineal. Tendrás acceso a:\n\n📺 Video explicativo (8 min)\n📝 Apuntes descargables\n🎯 Ejercicios prácticos\n✅ Prueba de conocimiento',
+      actions: [
+        {
+          label: 'Empezar ahora',
+          primary: true,
+          handler: () => {}
+        }
+      ],
+      isOpen: true
+    });
+  };
+
   return (
-    <div className="atlas-dashboard">
+    <>
+      <Modal
+        isOpen={modal?.isOpen || false}
+        title={modal?.title || ''}
+        message={modal?.message || ''}
+        type={modal?.type || 'info'}
+        actions={modal?.actions}
+        onClose={() => setModal(null)}
+      />
+      <div className="atlas-dashboard">
 
       <div className="atlas-page-header">
-        <div>
-          <p className="atlas-eyebrow">ATLAS IA</p>
-          <h1 className="atlas-title-main">Tablero de recomendaciones inteligentes</h1>
-          <p className="atlas-subtext">Atlas analiza tu ritmo y te propone las prioridades de estudio del día para avanzar con confianza.</p>
+        <div className="mb-8">
+          <h1 className="text-4xl font-black bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mb-3">Tu Compañero Digital</h1>
+          <p className="text-lg text-slate-600 font-medium max-w-2xl">Atlas analiza tu ritmo y te propone las prioridades de estudio del día para avanzar con confianza.</p>
         </div>
       </div>
 
@@ -120,9 +195,9 @@ export default function AtlasDashboard({
             </div>
 
             <div className="atlas-action-buttons">
-              <button className="atlas-action-pill atlas-action-primary">Continuar donde dejé</button>
-              <button className="atlas-action-pill">Quiz rápido</button>
-              <button className="atlas-action-pill">Explorar cursos</button>
+              <button className="atlas-action-pill atlas-action-primary" onClick={handleContinue}>Continuar donde dejé</button>
+              <button className="atlas-action-pill" onClick={handleQuiz}>Quiz rápido</button>
+              <button className="atlas-action-pill" onClick={handleExploreCourses}>Explorar cursos</button>
             </div>
           </div>
 
@@ -169,7 +244,7 @@ export default function AtlasDashboard({
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: '45%' }} />
             </div>
-            <button className="atlas-suggestion-cta">¡Empecemos! →</button>
+            <button className="atlas-suggestion-cta" onClick={handleSuggestionCTA}>¡Empecemos! →</button>
           </div>
 
           <div className="atlas-suggestion-card">
@@ -204,5 +279,6 @@ export default function AtlasDashboard({
       </div>
 
     </div>
+    </>
   );
 }
