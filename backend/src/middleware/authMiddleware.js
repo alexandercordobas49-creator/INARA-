@@ -1,11 +1,13 @@
-import jwt from 'jsonwebtoken';
+﻿import jwt from 'jsonwebtoken';
 import { findUserById } from '../repositories/UserRepository.js';
 
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET?.trim();
 
   if (!secret) {
-    throw new Error('JWT_SECRET no está configurado. Define una clave segura en las variables de entorno.');
+    throw new Error(
+      'JWT_SECRET no está configurado. Define una clave segura en las variables de entorno.'
+    );
   }
 
   if (secret.length < 32) {
@@ -30,8 +32,9 @@ export function signToken(user) {
 
 export async function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization || req.headers.Authorization;
+
   const token = authHeader?.startsWith('Bearer ')
-    ? authHeader.slice(7)
+    ? authHeader.slice(7).trim()
     : null;
 
   if (!token) {
@@ -42,6 +45,13 @@ export async function authenticateToken(req, res, next) {
 
   try {
     const payload = jwt.verify(token, getJwtSecret());
+
+    if (!payload?.id) {
+      return res.status(401).json({
+        message: 'Token inválido'
+      });
+    }
+
     const user = await findUserById(payload.id);
 
     if (!user) {
@@ -53,15 +63,33 @@ export async function authenticateToken(req, res, next) {
     req.user = user;
     next();
   } catch (error) {
-    if (error.message.includes('JWT_SECRET')) {
+    if (error.message?.includes('JWT_SECRET')) {
       console.error(error.message);
+
       return res.status(500).json({
         message: 'Configuración de autenticación incompleta'
       });
     }
 
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        message: 'Token expirado'
+      });
+    }
+
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'NotBeforeError'
+    ) {
+      return res.status(401).json({
+        message: 'Token inválido'
+      });
+    }
+
+    console.error('Authentication error:', error);
+
     return res.status(401).json({
-      message: 'Token inválido'
+      message: 'No se pudo autenticar la solicitud'
     });
   }
 }
