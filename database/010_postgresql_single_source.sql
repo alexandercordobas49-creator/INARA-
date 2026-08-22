@@ -1,5 +1,5 @@
 -- INARA PostgreSQL single-source migration
--- Safe to run after database/schema.sql and modules 007-009.
+-- Run after database/schema.sql and modules 007-009.
 
 ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'parent';
 
@@ -52,8 +52,7 @@ CREATE TABLE IF NOT EXISTS user_competency_progress (
   UNIQUE (user_id, route_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_competency_progress_user
-  ON user_competency_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_competency_progress_user ON user_competency_progress(user_id);
 
 CREATE TABLE IF NOT EXISTS evidences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -68,7 +67,13 @@ CREATE TABLE IF NOT EXISTS evidences (
 
 CREATE INDEX IF NOT EXISTS idx_evidences_progress ON evidences(progress_id);
 
--- Seed the competency routes used by the current INARA demo.
+INSERT INTO achievements (code, name, description, xp_reward)
+VALUES
+  ('first-attendance', 'Primera asistencia', 'Registro su primera asistencia.', 100),
+  ('streak-5', 'Cinco dias constantes', 'Alcanzo una racha de cinco dias.', 250),
+  ('level-3', 'Nivel constante', 'Alcanzo el nivel 3.', 150)
+ON CONFLICT (code) DO NOTHING;
+
 INSERT INTO competency_routes (name, description, icon, missions)
 SELECT 'Mecánica Automotriz',
        'Rutas prácticas para dominar el taller mecánico en INATEC.',
@@ -90,15 +95,3 @@ SELECT 'Tecnologías de la Información',
          {"id":"mission-6","title":"Soporte técnico","description":"Resuelve un problema técnico y documenta el proceso.","xp":110,"category":"Soporte","evidenceType":"document"}
        ]'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM competency_routes WHERE name = 'Tecnologías de la Información');
-
--- Optional demo parent relation. It is intentionally conditional and only works
--- when the corresponding demo users already exist.
-INSERT INTO parent_relations (parent_id, child_id)
-SELECT p.id, s.id
-FROM users p
-CROSS JOIN users s
-WHERE p.email = 'luis.parent@INARA.test'
-  AND s.email = 'valeria@INARA.test'
-  AND p.role = 'parent'
-  AND s.role = 'student'
-ON CONFLICT DO NOTHING;
