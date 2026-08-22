@@ -52,6 +52,22 @@ export async function runAlerts(req, res) {
       for (const parent of relations.rows) {
         for (const alert of alerts) {
           const message = `Alerta para ${student.first_name} ${student.last_name}: ${alert.message}`;
+
+          // Avoid creating the same alert repeatedly when an administrator
+          // runs the detector more than once on the same day.
+          const duplicate = await pool.query(`
+            SELECT id
+            FROM notifications
+            WHERE to_user_id=$1
+              AND child_id=$2
+              AND level=$3
+              AND message=$4
+              AND created_at >= CURRENT_DATE
+            LIMIT 1
+          `, [parent.id, student.id, alert.level, message]);
+
+          if (duplicate.rowCount) continue;
+
           const noteResult = await pool.query(`
             INSERT INTO notifications
               (to_user_id, child_id, to_email, to_phone, level, message, channel, status)
@@ -118,17 +134,29 @@ export async function runAlerts(req, res) {
 
 export async function listNotifications(req, res) {
   try {
-    const { userId } = req.query;
-    const params = userId ? [userId] : [];
+    const requestedUserId = req.query.userId;
+    const requester = req.user;
+
+    // Notifications contain family/student information. A normal user may
+    // only read their own notifications; only administrators may query all
+    // notifications or another user's notifications.
+    if (requestedUserId && requestedUserId !== requester.id && requester.role !== 'admin') {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    const effectiveUserId = requester.role === 'admin' ? requestedUserId : requester.id;
+    const params = effectiveUserId ? [effectiveUserId] : [];
+
     const result = await pool.query(`
       SELECT id, to_user_id AS "toUserId", child_id AS "childId",
              to_email AS "toEmail", to_phone AS "toPhone", level, message,
              channel, status, delivery_info AS "deliveryInfo",
              created_at AS "createdAt", sent_at AS "sentAt"
       FROM notifications
-      ${userId ? 'WHERE to_user_id=$1' : ''}
+      ${effectiveUserId ? 'WHERE to_user_id=$1' : ''}
       ORDER BY created_at DESC
     `, params);
+
     return res.json({ notifications: result.rows });
   } catch (error) {
     console.error(error);
