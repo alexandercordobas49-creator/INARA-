@@ -11,6 +11,7 @@ CREATE TABLE users (
   email VARCHAR(160) NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   role user_role NOT NULL DEFAULT 'student',
+  phone VARCHAR(40),
   total_xp INTEGER NOT NULL DEFAULT 0 CHECK (total_xp >= 0),
   current_level INTEGER NOT NULL DEFAULT 1 CHECK (current_level >= 1),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
