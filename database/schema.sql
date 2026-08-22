@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TYPE user_role AS ENUM ('student', 'instructor', 'admin');
+CREATE TYPE user_role AS ENUM ('student', 'instructor', 'admin', 'parent');
 CREATE TYPE attendance_status AS ENUM ('present', 'absent', 'late', 'excused');
 CREATE TYPE xp_event_type AS ENUM ('attendance', 'achievement', 'manual', 'streak');
 
@@ -23,6 +23,15 @@ CREATE TABLE courses (
   instructor_id UUID REFERENCES users(id) ON DELETE SET NULL,
   status VARCHAR(30) NOT NULL DEFAULT 'active',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE course_students (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  enrollment_status VARCHAR(30) NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (course_id, student_id)
 );
 
 CREATE TABLE attendance_records (
@@ -78,10 +87,69 @@ CREATE TABLE streaks (
   UNIQUE (user_id, course_id)
 );
 
+CREATE TABLE parent_relations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  child_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (parent_id, child_id),
+  CHECK (parent_id <> child_id)
+);
+
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  to_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  child_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  to_email VARCHAR(160),
+  to_phone VARCHAR(40),
+  level VARCHAR(20) NOT NULL DEFAULT 'info',
+  message TEXT NOT NULL,
+  channel VARCHAR(20) NOT NULL DEFAULT 'in_app',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  delivery_info JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at TIMESTAMPTZ
+);
+
+CREATE TABLE competency_routes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(160) NOT NULL,
+  description TEXT,
+  icon VARCHAR(40),
+  missions JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE user_competency_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  route_id UUID NOT NULL REFERENCES competency_routes(id) ON DELETE CASCADE,
+  completed_missions JSONB NOT NULL DEFAULT '[]'::jsonb,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, route_id)
+);
+
+CREATE TABLE evidences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  progress_id UUID NOT NULL REFERENCES user_competency_progress(id) ON DELETE CASCADE,
+  mission_id VARCHAR(120) NOT NULL,
+  type VARCHAR(40) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_attendance_user ON attendance_records(user_id);
 CREATE INDEX idx_xp_user_created ON xp_events(user_id, created_at DESC);
 CREATE INDEX idx_streaks_user ON streaks(user_id);
+CREATE INDEX idx_parent_relations_parent ON parent_relations(parent_id);
+CREATE INDEX idx_parent_relations_child ON parent_relations(child_id);
+CREATE INDEX idx_notifications_user_created ON notifications(to_user_id, created_at DESC);
+CREATE INDEX idx_competency_progress_user ON user_competency_progress(user_id);
+CREATE INDEX idx_evidences_progress ON evidences(progress_id);
 
 INSERT INTO levels (level_number, name, min_xp) VALUES
   (1, 'Inicial', 0),
