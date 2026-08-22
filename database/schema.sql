@@ -157,3 +157,14 @@ INSERT INTO levels (level_number, name, min_xp) VALUES
   (3, 'Constante', 1200),
   (4, 'Avanzado', 2500),
   (5, 'Experto', 5000);
+
+INSERT INTO achievements (code, name, description, xp_reward) VALUES
+  ('first-attendance', 'Primera asistencia', 'Registro su primera asistencia.', 100),
+  ('streak-5', 'Cinco dias constantes', 'Alcanzo una racha de cinco dias.', 250),
+  ('level-3', 'Nivel constante', 'Alcanzo el nivel 3.', 150);
+
+INSERT INTO competency_routes (name, description, icon, missions) VALUES
+  ('Mecánica Automotriz', 'Rutas prácticas para dominar el taller mecánico en INATEC.', '🔧',
+   '[{"id":"mission-1","title":"Inspección de motor","description":"Revisa y documenta el estado del motor en una ficha técnica.","xp":120,"category":"Taller","evidenceType":"photo"},{"id":"mission-2","title":"Cambio de aceite","description":"Realiza el cambio de aceite y registra los pasos en un informe.","xp":150,"category":"Proceso","evidenceType":"document"},{"id":"mission-3","title":"Ajuste de frenos","description":"Ajusta los frenos y comprueba su funcionamiento de forma segura.","xp":180,"category":"Seguridad","evidenceType":"photo"}]'::jsonb),
+  ('Tecnologías de la Información', 'Rutas para fortalecer informática, redes y soporte técnico.', '💻',
+   '[{"id":"mission-4","title":"Instalación de red local","description":"Configura una red local y documenta la topología.","xp":130,"category":"Redes","evidenceType":"document"},{"id":"mission-5","title":"Seguridad informática básica","description":"Aplica medidas de seguridad en un equipo y registra los resultados.","xp":140,"category":"Seguridad","evidenceType":"document"},{"id":"mission-6","title":"Soporte técnico","description":"Resuelve un problema técnico y documenta el proceso.","xp":110,"category":"Soporte","evidenceType":"document"}]'::jsonb);
