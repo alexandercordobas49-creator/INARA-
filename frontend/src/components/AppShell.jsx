@@ -19,22 +19,21 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
   if (session) {
     return (
       <ToastProvider>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-violet-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-violet-50 flex">
           <Sidebar 
             session={session} 
             onLogout={onLogout} 
           />
-          <main className="ml-56 min-h-screen">
-          <div className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]">
-            <div className="relative flex items-center justify-between px-6 py-5">
+          <main className="min-w-0 flex-1 min-h-screen">
+          <div className="relative z-10 border-b border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]">
+            <div className="relative flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-4">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent">
-                    INARA
-                  </h1>
-                  <p className="text-sm sm:text-base text-slate-500 mt-2 max-w-md">
-                    Tu Camino Hacia el Exito
-                  </p>
+                  <img
+                    src="/assets/Logo-removebg-preview.png?v=20260915"
+                    alt="INARA"
+                    className="h-24 w-auto max-w-[32rem] max-h-24 shrink-0 object-contain object-left sm:h-24 sm:max-w-[32rem]"
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-4">

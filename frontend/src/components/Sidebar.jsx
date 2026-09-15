@@ -13,15 +13,19 @@ export default function Sidebar({ session, onLogout }) {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-700 p-8 flex flex-col shadow-2xl overflow-y-auto text-white">
+    <aside className="w-60 min-h-screen shrink-0 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-700 p-8 flex flex-col shadow-2xl text-white">
       {/* Logo */}
       <div className="mb-8">
         <NavLink
           to="/platform"
           className="group flex items-center gap-4 mb-3 rounded-[28px] bg-white/10 p-4 shadow-[0_30px_80px_-50px_rgba(0,0,0,0.35)] ring-1 ring-white/10 transition-all duration-300 hover:bg-white/15 hover:-translate-y-0.5"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-2xl shadow-[0_18px_40px_-20px_rgba(255,255,255,0.35)]">
-            🎓
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-[0_18px_40px_-20px_rgba(255,255,255,0.35)]">
+            <img
+              src="/assets/logo-inara.png?v=20260915"
+              alt="INARA"
+              className="h-14 w-14 object-contain"
+            />
           </div>
           <div>
             <p className="text-sm font-black text-white group-hover:text-emerald-50">INARA</p>
