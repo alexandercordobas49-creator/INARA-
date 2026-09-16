@@ -1,5 +1,6 @@
 import XpRepository from "../repositories/XpRepository.js";
 import LevelService from "./levelService.js";
+import { evaluateStudentRisk } from './riskService.js';
 
 const XPService = {
 
@@ -26,11 +27,13 @@ const XPService = {
 
         // Recalcular el nivel
         const level = await LevelService.updateUserLevel(userId);
+        const risk = await evaluateStudentRisk(userId);
 
         return {
             event,
             user,
-            level
+            level,
+            risk: risk.risk
         };
 
     },

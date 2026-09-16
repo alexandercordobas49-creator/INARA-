@@ -22,6 +22,9 @@ const env = {
 };
 
 const sqlPath = path.resolve(process.cwd(), '..', 'database', 'schema.sql');
+const riskMigrationPath = path.resolve(process.cwd(), '..', 'database', 'schema', '011_dropout_prevention.sql');
+const interventionMigrationPath = path.resolve(process.cwd(), '..', 'database', '012_intervention_types.sql');
+const notificationMigrationPath = path.resolve(process.cwd(), '..', 'database', '013_notification_read_state.sql');
 
 try {
   console.log(`Creando base de datos de prueba: ${dbName}`);
@@ -38,7 +41,10 @@ try {
 try {
   console.log(`Aplicando esquema desde ${sqlPath}`);
   execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${sqlPath}"`, { env, stdio: 'inherit' });
-  console.log('Esquema aplicado correctamente.');
+  execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${riskMigrationPath}"`, { env, stdio: 'inherit' });
+  execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${interventionMigrationPath}"`, { env, stdio: 'inherit' });
+  execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${notificationMigrationPath}"`, { env, stdio: 'inherit' });
+  console.log('Esquema y migración de prevención aplicados correctamente.');
 } catch (error) {
   console.error('Error aplicando el esquema:', error.message);
   process.exit(1);

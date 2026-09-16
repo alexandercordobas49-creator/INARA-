@@ -69,6 +69,14 @@ export async function register(req, res) {
 
   }
 
+  if (role === 'admin') {
+
+    return res.status(403).json({
+      message: 'El rol de administrador no puede crearse desde el registro publico'
+    });
+
+  }
+
 
 
   const exists = await findUserByEmail(email);
