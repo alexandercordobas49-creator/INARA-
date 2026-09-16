@@ -106,7 +106,7 @@ export default function Auth({ onSession }) {
         <div className="auth-card auth-card--intro lg:col-span-1 rounded-2xl p-6 sm:p-7 border relative overflow-hidden">
           <div className="relative z-10">
             <div className="auth-brand">
-              <img src="/assets/logo-inara.png?v=20260915" alt="INARA" className="auth-brand__logo" />
+              <img src="/assets/logo-INARA.png?v=20260915" alt="INARA" className="auth-brand__logo" />
               <span className="auth-brand__deco" aria-hidden="true">🎓</span>
               <span className="auth-brand__welcome">Bienvenido a</span>
               <div className="auth-brand__name"><span>INA</span><span className="auth-brand__suffix">RA</span></div>
@@ -260,7 +260,6 @@ export default function Auth({ onSession }) {
                 <select className="w-full rounded-lg border border-slate-600 px-3 py-2 font-medium focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 bg-slate-700/50 text-slate-100 transition-all" value={registerForm.role} onChange={(event) => setRegisterForm({ ...registerForm, role: event.target.value })}>
                   <option value="student" className="bg-slate-800">👨‍🎓 Estudiante</option>
                   <option value="instructor" className="bg-slate-800">👨‍🏫 Docente</option>
-                  <option value="admin" className="bg-slate-800">⚙️ Administrador</option>
                   <option value="parent" className="bg-slate-800">👪 Padre/Tutor</option>
                 </select>
               </div>

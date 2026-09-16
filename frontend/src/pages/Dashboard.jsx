@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Modal from '../components/Modal.jsx';
 import { api } from '../api.js';
+import RiskFollowUp from './RiskFollowUp.jsx';
 
 export default function Dashboard({ selectedStudent, session }) {
   const [dashboard, setDashboard] = useState(null);
@@ -48,6 +49,10 @@ export default function Dashboard({ selectedStudent, session }) {
 
     fetchData();
   }, [selectedStudent?.id]);
+
+  if (session?.user?.role === 'instructor' || session?.user?.role === 'admin') {
+    return <RiskFollowUp />;
+  }
 
   if (!selectedStudent) {
     return (
@@ -277,9 +282,7 @@ export default function Dashboard({ selectedStudent, session }) {
           {/* Asistente IA */}
           <div className="rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 p-6 border border-slate-200">
             <div className="flex items-start gap-4">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white p-2">
-                <img src="/assets/atlas/robot-smile.svg" alt="Atlas" className="w-full h-full object-contain" />
-              </div>
+              <img src="/assets/ATLAS.png" alt="Atlas" className="h-24 w-24 shrink-0 object-contain" />
               <div className="flex-1">
                 <h4 className="font-bold text-slate-900 mb-2">Asistente IA</h4>
                 <p className="text-sm text-slate-600 mb-4">¡Hola Valeria! 👋</p>

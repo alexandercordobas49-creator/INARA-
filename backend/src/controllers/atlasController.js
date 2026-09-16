@@ -96,7 +96,8 @@ export async function askAtlas(req, res) {
     const [
       attendanceResult,
       streakResult,
-      nextLevelResult
+      nextLevelResult,
+      riskResult
     ] = await Promise.all([
       pool.query(`
         SELECT
@@ -125,6 +126,21 @@ export async function askAtlas(req, res) {
         ORDER BY min_xp
         LIMIT 1
       `, [student.total_xp])
+      , pool.query(`
+        SELECT sr.level, sr.risk_score AS "riskScore", sr.factors,
+               r.message AS recommendation
+        FROM student_risk sr
+        LEFT JOIN LATERAL (
+          SELECT message
+          FROM recommendations
+          WHERE related_risk_id = sr.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) r ON TRUE
+        WHERE sr.student_id = $1
+        ORDER BY sr.created_at DESC
+        LIMIT 1
+      `, [student.id])
     ]);
 
     const attendance = attendanceResult.rows[0];
@@ -139,9 +155,16 @@ export async function askAtlas(req, res) {
       streakResult.rows[0]?.currentCount || 0;
 
     const nextLevel = nextLevelResult.rows[0];
+    const risk = riskResult.rows[0];
+    const riskFactors = Array.isArray(risk?.factors)
+      ? risk.factors.map((factor) => factor.label).join(' ')
+      : '';
+    const riskSummary = risk
+      ? ` Evaluación de riesgo ${risk.level} (${risk.riskScore}/100). ${riskFactors} ${risk.recommendation || ''}`.trim()
+      : ' Todavía no existe una evaluación de riesgo persistida para este estudiante.';
 
     return res.json({
-      answer: `${student.first_name} tiene ${student.total_xp} XP, nivel ${student.current_level}, asistencia de ${attendanceRate}% y racha actual de ${streak} días. ${
+      answer: `${student.first_name} tiene ${student.total_xp} XP, nivel ${student.current_level}, asistencia de ${attendanceRate}% y racha actual de ${streak} días.${riskSummary} ${
         nextLevel
           ? `Le faltan ${
               nextLevel.minXp - student.total_xp

@@ -37,7 +37,7 @@ const indicatorMetrics = [
   { icon: "👨‍🎓", label: "Estudiantes registrados", value: 1250 },
   { icon: "🏫", label: "Centros educativos", value: 24 },
   { icon: "📚", label: "Cursos disponibles", value: 85 },
-  { icon: "🤖", label: "Consultas a Atlas IA", value: 18420 },
+  { icon: "ATLAS", label: "Consultas a Atlas IA", value: 18420 },
   { icon: "🏆", label: "Logros desbloqueados", value: 7812 },
   { icon: "⭐", label: "XP generada", value: 1245000 },
   { icon: "🔥", label: "Rachas activas", value: 652 },
@@ -46,40 +46,140 @@ const indicatorMetrics = [
 
 const departments = [
   {
-    id: "granada",
-    name: "Granada",
-    students: 150,
-    centers: 8,
-    attendance: "95%",
-    cx: 72,
-    cy: 176,
+    id: "rio-san-juan",
+    mapPath: "NISJ",
+    name: "Río San Juan",
+    students: 76,
+    centers: 4,
+    attendance: "88%",
   },
   {
-    id: "managua",
-    name: "Managua",
-    students: 430,
-    centers: 18,
-    attendance: "92%",
-    cx: 170,
-    cy: 110,
+    id: "atlantico-norte",
+    mapPath: "NIAN",
+    name: "Atlántico Norte",
+    students: 98,
+    centers: 6,
+    attendance: "86%",
   },
   {
-    id: "masaya",
-    name: "Masaya",
-    students: 120,
+    id: "jinotega",
+    mapPath: "NIJI",
+    name: "Jinotega",
+    students: 112,
+    centers: 7,
+    attendance: "90%",
+  },
+  {
+    id: "nueva-segovia",
+    mapPath: "NINS",
+    name: "Nueva Segovia",
+    students: 105,
+    centers: 6,
+    attendance: "91%",
+  },
+  {
+    id: "chinandega",
+    mapPath: "NICI",
+    name: "Chinandega",
+    students: 128,
+    centers: 7,
+    attendance: "90%",
+  },
+  {
+    id: "madriz",
+    mapPath: "NIMD",
+    name: "Madriz",
+    students: 84,
     centers: 5,
     attendance: "89%",
-    cx: 128,
-    cy: 190,
+  },
+  {
+    id: "rivas",
+    mapPath: "NIRI",
+    name: "Rivas",
+    students: 92,
+    centers: 5,
+    attendance: "93%",
+  },
+  {
+    id: "atlantico-sur",
+    mapPath: "NIAS",
+    name: "Atlántico Sur",
+    students: 87,
+    centers: 5,
+    attendance: "85%",
   },
   {
     id: "leon",
+    mapPath: "NILE",
     name: "León",
     students: 170,
     centers: 7,
     attendance: "91%",
-    cx: 100,
-    cy: 66,
+  },
+  {
+    id: "managua",
+    mapPath: "NIMN",
+    name: "Managua",
+    students: 430,
+    centers: 18,
+    attendance: "92%",
+  },
+  {
+    id: "carazo",
+    mapPath: "NICA",
+    name: "Carazo",
+    students: 108,
+    centers: 6,
+    attendance: "92%",
+  },
+  {
+    id: "matagalpa",
+    mapPath: "NIMT",
+    name: "Matagalpa",
+    students: 145,
+    centers: 8,
+    attendance: "90%",
+  },
+  {
+    id: "boaco",
+    mapPath: "NIBO",
+    name: "Boaco",
+    students: 82,
+    centers: 5,
+    attendance: "89%",
+  },
+  {
+    id: "chontales",
+    mapPath: "NICO",
+    name: "Chontales",
+    students: 116,
+    centers: 6,
+    attendance: "90%",
+  },
+  {
+    id: "esteli",
+    mapPath: "NIES",
+    name: "Estelí",
+    students: 134,
+    centers: 7,
+    attendance: "94%",
+  },
+  {
+    id: "granada",
+    mapPath: "NIGR",
+    name: "Granada",
+    students: 150,
+    centers: 8,
+    attendance: "95%",
+  },
+  {
+    id: "masaya",
+    mapPath: "NIMS",
+    name: "Masaya",
+    students: 120,
+    centers: 5,
+    attendance: "89%",
   },
 ];
 
@@ -107,7 +207,7 @@ const modules = [
   },
   { icon: "🎯", label: "Retos", description: "Completa desafíos." },
   {
-    icon: "🤖",
+    icon: "ATLAS",
     label: "Atlas IA",
     description: "Recibe ayuda personalizada.",
   },
@@ -115,7 +215,7 @@ const modules = [
 
 const benefits = [
   {
-    icon: "🤖",
+    icon: "ATLAS",
     title: "Inteligencia Artificial",
     description: "Recomendaciones adaptativas basadas en tu desempeño.",
   },
@@ -156,6 +256,10 @@ const technologies = [
   "Atlas IA",
 ];
 
+const mapDepartmentIds = Object.fromEntries(
+  departments.map((department) => [department.mapPath, department.id]),
+);
+
 const odsItems = [
   { label: "ODS 4", title: "Educación de Calidad" },
   { label: "ODS 9", title: "Industria e Innovación" },
@@ -171,7 +275,7 @@ const odsItems = [
 
 const newsItems = [
   {
-    title: "Hackathon Nicaragua",
+    title: "Innovatec Nicaragua",
     description:
       "INARA participa en el evento con nuevas demostraciones de Atlas IA.",
   },
@@ -223,7 +327,7 @@ const flowSteps = [
   },
   {
     id: "atlas",
-    icon: "🤖",
+    icon: "ATLAS",
     label: "Atlas IA",
     detail:
       "Recibe recomendaciones inteligentes, análisis de desempeño y apoyo personalizado en cada paso.",
@@ -253,8 +357,35 @@ const flowSteps = [
 
 export default function PlatformInfo() {
   const [activeDept, setActiveDept] = useState("managua");
+  const [mapMarkup, setMapMarkup] = useState("");
+  const [activeMapPath, setActiveMapPath] = useState("NIMN");
   const [selectedFlow, setSelectedFlow] = useState(flowSteps[0].id);
   const [modal, setModal] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch("/assets/Nicaragua.svg", { signal: controller.signal })
+      .then((response) => response.text())
+      .then((markup) => setMapMarkup(markup))
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          setMapMarkup("");
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const handleMapClick = (event) => {
+    const path = event.target.closest("path[id]");
+    if (!path || !event.currentTarget.contains(path)) return;
+
+    setActiveMapPath(path.id);
+
+    const departmentId = mapDepartmentIds[path.id];
+    if (departmentId) setActiveDept(departmentId);
+  };
 
   const activeDepartment = useMemo(
     () => departments.find((dept) => dept.id === activeDept) || departments[1],
@@ -303,7 +434,7 @@ export default function PlatformInfo() {
   const handleAtlasInfo = () => {
     setModal({
       type: "info",
-      title: "🤖 Atlas IA - Tu Compañero Digital",
+      title: "Atlas IA - Tu Compañero Digital",
       message:
         "Atlas es tu asistente de inteligencia artificial que:\n\n✓ Analiza tu desempeño académico\n✓ Genera recomendaciones personalizadas\n✓ Resuelve tus dudas 24/7\n✓ Motiva tu aprendizaje",
       actions: [
@@ -381,9 +512,9 @@ export default function PlatformInfo() {
 
             <div className="space-y-5">
               <img
-                src="/assets/logo-inara.png"
+                src="/assets/logo-INARA.png"
                 alt="Logo oficial de INARA"
-                className="h-24 w-auto object-contain mix-blend-multiply"
+                className="h-32 w-auto max-w-full object-contain mix-blend-multiply md:h-40"
               />{" "}
               <h1 className="text-5xl font-black leading-tight bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent md:text-6xl">
                 Bienvenido a INARA
@@ -422,7 +553,7 @@ export default function PlatformInfo() {
           <div className="platform-hero-illu">
             <div className="platform-hero-robot">
               <div className="platform-hero-robot-inner">
-                <div className="platform-hero-robot-icon">🤖</div>
+                <img src="/assets/ATLAS.png" alt="Atlas" className="platform-hero-atlas-image" />
               </div>
 
               <div className="platform-hero-robot-card">
@@ -540,42 +671,19 @@ export default function PlatformInfo() {
             </div>
 
             <div className="mt-8">
-              <svg
-                viewBox="0 0 360 260"
-                className="platform-map-view"
-                preserveAspectRatio="xMidYMid meet"
-              >
-                {departments.map((dept) => (
-                  <g
-                    key={dept.id}
-                    onMouseEnter={() => setActiveDept(dept.id)}
-                    className={`platform-map-dot ${
-                      activeDept === dept.id ? "active" : ""
-                    }`}
-                  >
-                    <circle
-                      cx={dept.cx}
-                      cy={dept.cy}
-                      r="18"
-                      fill={activeDept === dept.id ? "#22c55e" : "#ffffff"}
-                      stroke="#16a34a"
-                      strokeWidth="3"
-                      opacity={activeDept === dept.id ? "1" : "0.92"}
-                    />
-
-                    <text
-                      x={dept.cx}
-                      y={dept.cy + 5}
-                      textAnchor="middle"
-                      fontSize="11"
-                      fontWeight="700"
-                      fill={activeDept === dept.id ? "#ffffff" : "#0f172a"}
-                    >
-                      {dept.name.charAt(0)}
-                    </text>
-                  </g>
-                ))}
-              </svg>
+              {mapMarkup ? (
+                <svg
+                  viewBox="0 0 1000 893"
+                  role="img"
+                  aria-label="Mapa interactivo de Nicaragua dividido por departamentos"
+                  className="platform-map-view"
+                  data-active-path={activeMapPath}
+                  onClick={handleMapClick}
+                  dangerouslySetInnerHTML={{ __html: mapMarkup }}
+                />
+              ) : (
+                <p className="py-16 text-center text-slate-500">Cargando mapa...</p>
+              )}
             </div>
           </div>
 
@@ -734,9 +842,11 @@ export default function PlatformInfo() {
           <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {modules.map((module) => (
               <div key={module.label} className="platform-module-card p-6">
-                <div className="text-4xl">{module.icon}</div>
+                {module.icon !== "ATLAS" && (
+                  <div className="text-4xl">{module.icon}</div>
+                )}
 
-                <p className="mt-4 text-xl font-bold text-slate-950">
+                <p className={`${module.icon === "ATLAS" ? "" : "mt-4 "}text-xl font-bold text-slate-950`}>
                   {module.label}
                 </p>
 
@@ -789,7 +899,7 @@ export default function PlatformInfo() {
           <div className="platform-hero-illu p-8">
             <div className="platform-hero-robot">
               <div className="platform-hero-robot-inner">
-                <div className="platform-hero-robot-icon">🤖</div>
+                <img src="/assets/ATLAS.png" alt="Atlas" className="platform-hero-robot-icon" />
               </div>
 
               <div className="platform-hero-robot-card">
@@ -997,7 +1107,7 @@ export default function PlatformInfo() {
               </p>
 
               <p className="mt-3 text-xl font-bold text-slate-950">
-                Hackathon Nicaragua 2026
+                Innovatec Nicaragua 2026
               </p>
             </div>
 

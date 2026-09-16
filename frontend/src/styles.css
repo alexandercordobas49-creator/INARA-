@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 :root {
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --color-brand: #059669;
+  --color-brand-dark: #047857;
+  --color-accent: #0891b2;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --line: #e2e8f0;
   font-family: Inter, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -31,6 +39,23 @@ body {
   min-height: 100vh;
 }
 
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-enter-animation {
+  animation: route-enter 300ms ease-out both;
+  transform-origin: top center;
+}
+
+
 ::selection {
   background: rgba(14, 165, 233, 0.25);
   color: #0f172a;
@@ -41,6 +66,43 @@ select,
 textarea,
 button {
   font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, 0.42);
+  outline-offset: 3px;
+}
+
+button:not(:disabled),
+a {
+  transition-duration: 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .auth-page {
@@ -157,8 +219,8 @@ button {
 
 .auth-brand__logo {
   display: block;
-  width: min(100%, 12rem);
-  height: 7rem;
+  width: min(100%, 18rem);
+  height: 10rem;
   object-fit: contain;
   margin: 0 auto 0.9rem;
   border-radius: 0;
@@ -640,8 +702,8 @@ button {
   }
 
   .auth-brand__logo {
-    height: 5.5rem;
-    width: min(100%, 10rem);
+    height: 8rem;
+    width: min(100%, 14rem);
   }
 
   .auth-footer__security {

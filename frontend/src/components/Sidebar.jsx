@@ -1,5 +1,16 @@
 import { NavLink } from 'react-router-dom';
 
+const roleLabels = {
+  student: 'Estudiante',
+  instructor: 'Docente',
+  admin: 'Administrador',
+  parent: 'Padre de familia'
+};
+
+function getRoleLabel(role) {
+  return roleLabels[role] || role || 'Usuario';
+}
+
 export default function Sidebar({ session, onLogout }) {
   const menuItems = [
     { id: 'dashboard', label: 'Inicio', icon: '🏠', path: '/dashboard' },
@@ -13,29 +24,27 @@ export default function Sidebar({ session, onLogout }) {
   ];
 
   return (
-    <aside className="w-60 min-h-screen shrink-0 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-700 p-8 flex flex-col shadow-2xl text-white">
+    <aside className="sticky top-0 h-screen max-h-screen w-60 shrink-0 overflow-y-auto bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-700 p-8 flex flex-col shadow-2xl text-white">
       {/* Logo */}
       <div className="mb-8">
         <NavLink
           to="/platform"
-          className="group flex items-center gap-4 mb-3 rounded-[28px] bg-white/10 p-4 shadow-[0_30px_80px_-50px_rgba(0,0,0,0.35)] ring-1 ring-white/10 transition-all duration-300 hover:bg-white/15 hover:-translate-y-0.5"
+          aria-label="Abrir información de INARA"
+          title="Abrir información de INARA"
+          className="group mb-3 flex w-full flex-col items-center rounded-[28px] bg-white/10 p-4 text-center shadow-[0_30px_80px_-50px_rgba(0,0,0,0.35)] ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1 hover:bg-white/15 hover:shadow-[0_22px_45px_-24px_rgba(52,211,153,0.65)] active:scale-[0.97]"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-[0_18px_40px_-20px_rgba(255,255,255,0.35)]">
+          <div className="flex w-full items-center justify-center rounded-2xl bg-white/10 px-3 py-2 shadow-[0_18px_40px_-20px_rgba(255,255,255,0.35)]">
             <img
-              src="/assets/logo-inara.png?v=20260915"
+              src="/assets/logo-INARA.png?v=20260915"
               alt="INARA"
-              className="h-14 w-14 object-contain"
+              className="h-auto w-full max-w-[8rem] object-contain transition-transform duration-500 ease-out group-hover:scale-105 group-hover:rotate-1 group-active:scale-95"
             />
-          </div>
-          <div>
-            <p className="text-sm font-black text-white group-hover:text-emerald-50">INARA</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-200 group-hover:text-emerald-100">Tu camino hacia el éxito</p>
           </div>
         </NavLink>
       </div>
 
       {/* Menu Principal */}
-      <nav className="flex-1 space-y-3">
+      <nav className="flex-none space-y-3">
         <div className="mb-6">
           <NavLink
             to="/dashboard"
@@ -82,7 +91,7 @@ export default function Sidebar({ session, onLogout }) {
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-white">{session.user.firstName} {session.user.lastName}</p>
-              <p className="text-xs text-emerald-200 uppercase tracking-[0.12em]">{session.user.role}</p>
+              <p className="text-xs text-emerald-200 uppercase tracking-[0.12em]">{getRoleLabel(session.user.role)}</p>
             </div>
           </div>
 

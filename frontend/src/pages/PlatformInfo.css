@@ -136,17 +136,12 @@
   place-items: center;
 }
 
-.platform-hero-robot-icon {
-  width: 128px;
-  height: 128px;
-  border-radius: 36px;
-  background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
-  color: white;
-  font-size: 3.5rem;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 24px 50px rgba(34,197,94,0.28), inset 0 -2px 6px rgba(0,0,0,0.1);
-  animation: float 3s ease-in-out infinite;
+.platform-hero-atlas-image {
+  display: block;
+  width: min(100%, 300px);
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
 .platform-hero-robot-card {
@@ -234,8 +229,44 @@
 
 .platform-map-view {
   width: 100%;
-  height: auto;
+  height: 460px;
   display: block;
+  overflow: visible;
+}
+
+.platform-map-view #features path {
+  fill: #6f9c76;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: fill 0.2s ease, filter 0.2s ease;
+}
+
+.platform-map-view #features path:hover,
+.platform-map-view[data-active-path] #features path[id]:is(:hover) {
+  fill: #34d399;
+  filter: brightness(1.04);
+}
+
+.platform-map-view[data-active-path="NISJ"] #NISJ,
+.platform-map-view[data-active-path="NIAN"] #NIAN,
+.platform-map-view[data-active-path="NIJI"] #NIJI,
+.platform-map-view[data-active-path="NINS"] #NINS,
+.platform-map-view[data-active-path="NICI"] #NICI,
+.platform-map-view[data-active-path="NIMD"] #NIMD,
+.platform-map-view[data-active-path="NIRI"] #NIRI,
+.platform-map-view[data-active-path="NIAS"] #NIAS,
+.platform-map-view[data-active-path="NILE"] #NILE,
+.platform-map-view[data-active-path="NIMN"] #NIMN,
+.platform-map-view[data-active-path="NICA"] #NICA,
+.platform-map-view[data-active-path="NIMT"] #NIMT,
+.platform-map-view[data-active-path="NIBO"] #NIBO,
+.platform-map-view[data-active-path="NICO"] #NICO,
+.platform-map-view[data-active-path="NIES"] #NIES,
+.platform-map-view[data-active-path="NIGR"] #NIGR,
+.platform-map-view[data-active-path="NIMS"] #NIMS {
+  fill: #16a34a;
+  filter: drop-shadow(0 4px 5px rgba(22, 163, 74, 0.28));
 }
 
 .platform-map-dot {

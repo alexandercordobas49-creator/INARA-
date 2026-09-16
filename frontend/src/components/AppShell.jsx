@@ -1,8 +1,10 @@
 import Sidebar from './Sidebar.jsx';
 import Toasts from './Toasts.jsx';
 import { ToastProvider } from '../contexts/ToastContext.jsx';
+import { useLocation } from 'react-router-dom';
 
 export default function AppShell({ modules, activeModule, onSelectModule, session, onLogout, children }) {
+  const location = useLocation();
   const icons = {
     auth: '🏠',
     roles: '👥',
@@ -24,7 +26,7 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
             session={session} 
             onLogout={onLogout} 
           />
-          <main className="min-w-0 flex-1 min-h-screen">
+          <main className="app-main min-w-0 flex-1 min-h-screen">
           <div className="relative z-10 border-b border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]">
             <div className="relative flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-4">
@@ -45,7 +47,11 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-emerald-300/40 via-slate-300/0 to-cyan-300/40" />
             </div>
           </div>
-          <div className="p-8">{children}</div>
+          <div className="app-main-content p-4 sm:p-6 lg:p-8">
+            <div key={location.pathname} className="route-enter-animation">
+              {children}
+            </div>
+          </div>
             <Toasts />
           </main>
         </div>

@@ -152,7 +152,7 @@ export default function AtlasDashboard({
         <Panel className="atlas-hero-card">
           <div className="atlas-hero-card-top">
             <div className="atlas-avatar-card">
-              <div className="avatar-icon-large">🤖</div>
+              <img src="/assets/ATLAS.png" alt="Atlas" className="avatar-icon-large" />
             </div>
 
             <div className="atlas-hero-copy">
