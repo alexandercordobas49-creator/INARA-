@@ -35,4 +35,18 @@ describe('evaluateSignals', () => {
     expect(evaluation.mainReason).toContain('ausencias');
     expect(evaluation.factors.some((factor) => factor.code === 'attendance')).toBe(true);
   });
+
+  it('no penaliza a un estudiante sin datos suficientes', () => {
+    const evaluation = evaluateSignals(signals({
+      totalXp: 0,
+      totalSessions: 0,
+      recentXpEvents: 0,
+      currentStreak: 0,
+      routesStarted: 0,
+      completedMissions: 0
+    }));
+    expect(evaluation.score).toBe(0);
+    expect(evaluation.mainReason).toBe('Datos insuficientes para evaluación');
+    expect(evaluation.factors[0].code).toBe('insufficient_data');
+  });
 });

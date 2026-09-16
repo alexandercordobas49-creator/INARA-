@@ -10,6 +10,7 @@ Desde `psql` conectado a la base `inara`:
 \i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/schema.sql'
 \i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/schema/011_dropout_prevention.sql'
 \i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/012_intervention_types.sql'
+\i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/013_notification_read_state.sql'
 ```
 
 ## Migración de una base existente
@@ -20,6 +21,7 @@ Si la base ya fue creada con `schema.sql` y los módulos anteriores:
 \i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/010_postgresql_single_source.sql'
 \i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/schema/011_dropout_prevention.sql'
 \i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/012_intervention_types.sql'
+\i 'C:/Users/Usuario/Documents/GitHub/INA-Track/database/013_notification_read_state.sql'
 ```
 
 La migración agrega:

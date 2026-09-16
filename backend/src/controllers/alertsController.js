@@ -138,7 +138,7 @@ export async function listNotifications(req, res) {
     const result = await pool.query(`
       SELECT id, to_user_id AS "toUserId", child_id AS "childId",
              to_email AS "toEmail", to_phone AS "toPhone", level, message,
-             channel, status, delivery_info AS "deliveryInfo",
+             channel, status, is_read AS "isRead", delivery_info AS "deliveryInfo",
              created_at AS "createdAt", sent_at AS "sentAt"
       FROM notifications
       ${effectiveUserId ? 'WHERE to_user_id=$1' : ''}
@@ -149,5 +149,21 @@ export async function listNotifications(req, res) {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Error obteniendo notificaciones' });
+  }
+}
+
+export async function markNotificationRead(req, res) {
+  try {
+    const result = await pool.query(`
+      UPDATE notifications
+      SET is_read=TRUE
+      WHERE id=$1 AND (to_user_id=$2 OR $3='admin')
+      RETURNING id, is_read AS "isRead"
+    `, [req.params.notificationId, req.user.id, req.user.role]);
+    if (!result.rowCount) return res.status(404).json({ message: 'Notificación no encontrada.' });
+    return res.json({ notification: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error actualizando notificación.' });
   }
 }

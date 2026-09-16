@@ -84,6 +84,17 @@ export async function askAtlas(req, res) {
       }
     }
 
+    if (req.user.role === 'instructor') {
+      const assignmentResult = await pool.query(`
+        SELECT 1
+        FROM course_students cs
+        JOIN courses c ON c.id = cs.course_id
+        WHERE cs.student_id=$1 AND c.instructor_id=$2 AND cs.enrollment_status='active'
+        LIMIT 1
+      `, [student.id, req.user.id]);
+      if (!assignmentResult.rowCount) return res.status(403).json({ message: 'No autorizado' });
+    }
+
     if (
       req.user.role === 'student' &&
       req.user.id !== student.id

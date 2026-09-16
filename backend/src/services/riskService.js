@@ -112,6 +112,26 @@ export function evaluateSignals(signals) {
   const routesStarted = Number(signals.routesStarted);
   const completedMissions = Number(signals.completedMissions);
 
+  const hasNoEvidence = totalSessions === 0 && recentXpEvents === 0 &&
+    currentStreak === 0 && routesStarted === 0 && completedMissions === 0;
+  if (hasNoEvidence) {
+    return {
+      score: 0,
+      level: 'low',
+      attendanceScore: 0,
+      xpScore: 0,
+      engagementScore: 0,
+      streakScore: 0,
+      factors: [{ code: 'insufficient_data', label: 'Datos insuficientes para evaluar el riesgo académico.' }],
+      mainReason: 'Datos insuficientes para evaluación',
+      recommendation: {
+        type: 'SYSTEM',
+        title: 'Completar información de progreso',
+        message: 'Aún no hay suficiente actividad académica para identificar señales. Continúa participando para habilitar un seguimiento más preciso.'
+      }
+    };
+  }
+
   let attendanceScore = 0;
   if (totalSessions === 0) {
     attendanceScore = 55;

@@ -2,9 +2,27 @@ import Sidebar from './Sidebar.jsx';
 import Toasts from './Toasts.jsx';
 import { ToastProvider } from '../contexts/ToastContext.jsx';
 import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { api } from '../api.js';
 
 export default function AppShell({ modules, activeModule, onSelectModule, session, onLogout, children }) {
   const location = useLocation();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    api('/alerts/notifications').then((result) => setNotifications(result.notifications || [])).catch(() => setNotifications([]));
+  }, [session?.user?.id]);
+
+  async function markNotificationRead(id) {
+    try {
+      await api(`/alerts/notifications/${id}/read`, { method: 'PATCH' });
+      setNotifications((current) => current.map((notification) => notification.id === id ? { ...notification, isRead: true } : notification));
+    } catch (error) {
+      console.error(error);
+    }
+  }
   const icons = {
     auth: '🏠',
     roles: '👥',
@@ -39,7 +57,15 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <button className="p-2 rounded-2xl hover:bg-slate-100 transition-all text-xl">🔔</button>
+                <div className="relative">
+                  <button type="button" aria-label="Ver notificaciones" onClick={() => setShowNotifications((visible) => !visible)} className="relative rounded-2xl p-2 text-xl transition-all hover:bg-slate-100">🔔
+                    {notifications.some((notification) => !notification.isRead) && <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-500" />}
+                  </button>
+                  {showNotifications && <div className="absolute right-0 z-30 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-xl">
+                    <p className="px-2 pb-2 text-sm font-black text-slate-900">Notificaciones</p>
+                    {notifications.length === 0 ? <p className="px-2 py-3 text-sm text-slate-500">No tienes notificaciones nuevas.</p> : notifications.slice(0, 5).map((notification) => <button type="button" key={notification.id} onClick={() => markNotificationRead(notification.id)} className={`block w-full rounded-xl px-2 py-3 text-left text-sm hover:bg-emerald-50 ${notification.isRead ? 'text-slate-500' : 'font-semibold text-slate-800'}`}><span>{notification.message}</span><span className="mt-1 block text-xs uppercase text-slate-400">{notification.level}</span></button>)}
+                  </div>}
+                </div>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">
                   {session.user?.firstName?.[0]}{session.user?.lastName?.[0]}
                 </div>

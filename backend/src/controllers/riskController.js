@@ -129,6 +129,21 @@ export async function createIntervention(req, res) {
       return res.status(403).json({ message: 'El estudiante no pertenece a tu alcance autorizado.' });
     }
 
+    if (riskId) {
+      const riskCheck = await pool.query(
+        'SELECT 1 FROM student_risk WHERE id=$1 AND student_id=$2',
+        [riskId, studentId]
+      );
+      if (!riskCheck.rowCount) return res.status(400).json({ message: 'El riesgo no pertenece al estudiante.' });
+    }
+    if (recommendationId) {
+      const recommendationCheck = await pool.query(
+        'SELECT 1 FROM recommendations WHERE recommendation_id=$1 AND student_id=$2',
+        [recommendationId, studentId]
+      );
+      if (!recommendationCheck.rowCount) return res.status(400).json({ message: 'La recomendación no pertenece al estudiante.' });
+    }
+
     const result = await pool.query(`
       INSERT INTO interventions
         (student_id, created_by, risk_id, recommendation_id, action_type, notes, status, follow_up_date, completed_at)
@@ -137,6 +152,19 @@ export async function createIntervention(req, res) {
         recommendation_id AS "recommendationId", action_type AS "actionType", notes, status,
         follow_up_date AS "followUpDate", completed_at AS "completedAt", created_at AS "createdAt"
     `, [studentId, req.user.id, riskId, recommendationId, actionType, notes.trim() || null, status, followUpDate]);
+
+    if (recommendationId) {
+      await pool.query(
+        'UPDATE recommendations SET is_applied=TRUE WHERE recommendation_id=$1 AND student_id=$2',
+        [recommendationId, studentId]
+      );
+    }
+    if (riskId && ['IN_PROGRESS', 'COMPLETED'].includes(status)) {
+      await pool.query(
+        'UPDATE student_risk SET status=$1, updated_at=NOW() WHERE id=$2 AND student_id=$3',
+        [status === 'COMPLETED' ? 'resolved' : 'in_progress', riskId, studentId]
+      );
+    }
 
     return res.status(201).json({ intervention: result.rows[0] });
   } catch (error) {
@@ -193,6 +221,20 @@ export async function updateIntervention(req, res) {
         i.notes, i.completed_at AS "completedAt", i.created_at AS "createdAt"
     `, [status, followUpDate, notes, req.params.interventionId, req.user.role, req.user.id]);
     if (!result.rowCount) return res.status(404).json({ message: 'Intervención no encontrada o no autorizada.' });
+    if (status === 'COMPLETED') {
+      await pool.query(`
+        UPDATE recommendations r
+        SET is_applied=TRUE
+        FROM interventions i
+        WHERE i.id=$1 AND r.recommendation_id=i.recommendation_id
+      `, [req.params.interventionId]);
+      await pool.query(`
+        UPDATE student_risk sr
+        SET status='resolved', updated_at=NOW()
+        FROM interventions i
+        WHERE i.id=$1 AND sr.id=i.risk_id
+      `, [req.params.interventionId]);
+    }
     return res.json({ intervention: result.rows[0] });
   } catch (error) {
     console.error(error);

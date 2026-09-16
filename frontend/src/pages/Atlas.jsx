@@ -1,12 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import AtlasDashboard from "./AtlasDashboard.jsx";
 
-export default function Atlas() {
+export default function Atlas({ selectedStudent }) {
 
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [context, setContext] = useState(null);
+  const [contextError, setContextError] = useState(null);
+
+  useEffect(() => {
+    if (!selectedStudent?.id) return;
+    Promise.all([
+      api(`/dashboard/student/${selectedStudent.id}`),
+      api(`/risk/${selectedStudent.id}`)
+    ]).then(([dashboard, risk]) => setContext({ dashboard, risk }))
+      .catch((error) => setContextError(error.message));
+  }, [selectedStudent?.id]);
 
 
   async function ask() {
@@ -20,7 +31,8 @@ export default function Atlas() {
       const response = await api("/atlas/ask", {
         method: "POST",
         body: JSON.stringify({
-          question
+          question,
+          ...(selectedStudent?.id ? { userId: selectedStudent.id } : {})
         }),
       });
 
@@ -46,6 +58,8 @@ export default function Atlas() {
       result={result}
       loading={loading}
       ask={ask}
+      context={context}
+      contextError={contextError}
     />
   );
 }

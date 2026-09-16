@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { api } from '../api.js';
 
 const roleLabels = {
   student: 'Estudiante',
@@ -12,6 +14,11 @@ function getRoleLabel(role) {
 }
 
 export default function Sidebar({ session, onLogout }) {
+  const [dashboard, setDashboard] = useState(null);
+  useEffect(() => {
+    if (!session?.user?.id || session.user.role !== 'student') return;
+    api(`/dashboard/student/${session.user.id}`).then(setDashboard).catch(() => setDashboard(null));
+  }, [session?.user?.id, session?.user?.role]);
   const menuItems = [
     { id: 'dashboard', label: 'Inicio', icon: '🏠', path: '/dashboard' },
     { id: 'progress', label: 'Mi progreso', icon: '📊', path: '/progress' },
@@ -78,7 +85,7 @@ export default function Sidebar({ session, onLogout }) {
             <p className="text-xs text-emerald-100">Tu impulso de hoy</p>
           </div>
         </div>
-        <p className="text-3xl font-extrabold text-white tracking-tight">12 días</p>
+        <p className="text-3xl font-extrabold text-white tracking-tight">{dashboard?.streak?.currentCount != null ? `${dashboard.streak.currentCount} días` : 'Sin datos'}</p>
         <p className="text-xs text-emerald-200 mt-2">¡Sigue así, lo estás logrando!</p>
       </div>
 
@@ -101,11 +108,11 @@ export default function Sidebar({ session, onLogout }) {
                 <span className="text-lg">⚡</span>
                 <p className="text-xs font-semibold text-emerald-100">XP</p>
               </div>
-              <p className="font-extrabold text-white">2,450</p>
+              <p className="font-extrabold text-white">{dashboard?.xp?.total ?? 'Sin datos'}</p>
             </div>
             <div className="flex items-center gap-3 bg-white/10 rounded-[26px] px-4 py-3 ring-1 ring-white/10 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-0.5">
               <span className="text-lg">📊</span>
-              <span className="text-xs font-bold text-white">Nivel 8</span>
+              <span className="text-xs font-bold text-white">Nivel {dashboard?.xp?.currentLevel ?? 'Sin datos'}</span>
             </div>
           </div>
 
