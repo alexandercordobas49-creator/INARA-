@@ -1,34 +1,15 @@
 import { pool } from '../config/database.js';
 import { sendEmailNotification, sendSmsNotification } from '../lib/notificationService.js';
 
-function detectAlerts(student) {
-  const alerts = [];
-  if (student.absent >= 3) alerts.push({ level: 'high', message: 'Alto riesgo por ausencias frecuentes' });
-  if ((student.currentCount || 0) <= 1) alerts.push({ level: 'medium', message: 'Baja actividad reciente' });
-  if ((student.total_xp || 0) < 200) alerts.push({ level: 'low', message: 'Progreso bajo en XP' });
-  return alerts;
-}
-
 async function studentRiskRows() {
   const result = await pool.query(`
-    SELECT
-      u.id,
-      u.first_name,
-      u.last_name,
-      u.email,
-      u.total_xp,
-      COALESCE(a.absent, 0)::int AS absent,
-      COALESCE(s.current_count, 0)::int AS "currentCount"
-    FROM users u
-    LEFT JOIN (
-      SELECT user_id, COUNT(*) FILTER (WHERE status='absent') AS absent
-      FROM attendance_records GROUP BY user_id
-    ) a ON a.user_id=u.id
-    LEFT JOIN (
-      SELECT user_id, MAX(current_count) AS current_count
-      FROM streaks GROUP BY user_id
-    ) s ON s.user_id=u.id
-    WHERE u.role='student'
+    SELECT DISTINCT ON (sr.student_id)
+      sr.student_id AS id, u.first_name, u.last_name, sr.id AS risk_id,
+      sr.level, sr.risk_score, sr.main_reason
+    FROM student_risk sr
+    JOIN users u ON u.id=sr.student_id
+    WHERE sr.level IN ('high', 'critical')
+    ORDER BY sr.student_id, sr.created_at DESC
   `);
   return result.rows;
 }
@@ -39,19 +20,27 @@ export async function runAlerts(req, res) {
     const notifications = [];
 
     for (const student of students) {
-      const alerts = detectAlerts(student);
-      if (!alerts.length) continue;
+      const alert = {
+        level: student.level,
+        message: `Estudiante requiere seguimiento: ${student.main_reason || 'señales académicas combinadas'} (${student.risk_score}/100).`
+      };
 
       const relations = await pool.query(`
-        SELECT p.id, p.email, p.phone, p.first_name
-        FROM parent_relations pr
-        JOIN users p ON p.id=pr.parent_id
-        WHERE pr.child_id=$1
+        SELECT DISTINCT recipient.id, recipient.email, recipient.phone, recipient.first_name
+        FROM (
+          SELECT p.id, p.email, p.phone, p.first_name
+          FROM parent_relations pr JOIN users p ON p.id=pr.parent_id
+          WHERE pr.child_id=$1
+          UNION
+          SELECT u.id, u.email, u.phone, u.first_name
+          FROM course_students cs JOIN courses c ON c.id=cs.course_id
+          JOIN users u ON u.id=c.instructor_id
+          WHERE cs.student_id=$1 AND cs.enrollment_status='active'
+        ) recipient
       `, [student.id]);
 
       for (const parent of relations.rows) {
-        for (const alert of alerts) {
-          const message = `Alerta para ${student.first_name} ${student.last_name}: ${alert.message}`;
+          const message = `Alerta INARA para ${student.first_name} ${student.last_name}: ${alert.message}`;
 
           // Avoid creating the same alert repeatedly when an administrator
           // runs the detector more than once on the same day.
@@ -121,7 +110,6 @@ export async function runAlerts(req, res) {
               `, [parent.id, student.id, parent.phone, alert.level, message, JSON.stringify(delivery)]);
             }
           }
-        }
       }
     }
 

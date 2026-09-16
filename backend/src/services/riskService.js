@@ -101,7 +101,7 @@ async function readSignals(client, studentId) {
   return result.rows[0] || null;
 }
 
-function evaluateSignals(signals) {
+export function evaluateSignals(signals) {
   const factors = [];
   const totalSessions = Number(signals.totalSessions);
   const recentSessions = Number(signals.recentSessions);
@@ -215,23 +215,43 @@ export async function evaluateStudentRisk(studentId) {
 
     const risk = riskResult.rows[0];
     const recommendationResult = await client.query(`
-      INSERT INTO recommendations
-        (student_id, recommendation_type, priority, source, title, message, related_risk_id)
-      VALUES ($1,$2::recommendation_type,$3::recommendation_priority,'SYSTEM'::recommendation_source,$4,$5,$6)
-      RETURNING recommendation_id AS id, student_id AS "studentId", recommendation_type AS type,
+      SELECT recommendation_id AS id, student_id AS "studentId", recommendation_type AS type,
         priority, source, title, message, related_risk_id AS "relatedRiskId",
         is_read AS "isRead", is_applied AS "isApplied", created_at AS "createdAt"
-    `, [
-      studentId,
-      evaluation.recommendation.type,
-      priorityForLevel(evaluation.level),
-      evaluation.recommendation.title,
-      evaluation.recommendation.message,
-      risk.id
-    ]);
+      FROM recommendations
+      WHERE student_id=$1 AND recommendation_type=$2::recommendation_type
+        AND source='SYSTEM'::recommendation_source AND is_applied=FALSE
+      ORDER BY created_at DESC
+      LIMIT 1
+    `, [studentId, evaluation.recommendation.type]);
+
+    let recommendation = recommendationResult.rows[0];
+    if (recommendation) {
+      const updatedRecommendation = await client.query(`
+        UPDATE recommendations
+        SET priority=$1::recommendation_priority, title=$2, message=$3, related_risk_id=$4
+        WHERE recommendation_id=$5
+        RETURNING recommendation_id AS id, student_id AS "studentId", recommendation_type AS type,
+          priority, source, title, message, related_risk_id AS "relatedRiskId",
+          is_read AS "isRead", is_applied AS "isApplied", created_at AS "createdAt"
+      `, [priorityForLevel(evaluation.level), evaluation.recommendation.title,
+        evaluation.recommendation.message, risk.id, recommendation.id]);
+      recommendation = updatedRecommendation.rows[0];
+    } else {
+      const createdRecommendation = await client.query(`
+        INSERT INTO recommendations
+          (student_id, recommendation_type, priority, source, title, message, related_risk_id)
+        VALUES ($1,$2::recommendation_type,$3::recommendation_priority,'SYSTEM'::recommendation_source,$4,$5,$6)
+        RETURNING recommendation_id AS id, student_id AS "studentId", recommendation_type AS type,
+          priority, source, title, message, related_risk_id AS "relatedRiskId",
+          is_read AS "isRead", is_applied AS "isApplied", created_at AS "createdAt"
+      `, [studentId, evaluation.recommendation.type, priorityForLevel(evaluation.level),
+        evaluation.recommendation.title, evaluation.recommendation.message, risk.id]);
+      recommendation = createdRecommendation.rows[0];
+    }
 
     await client.query('COMMIT');
-    return { student: signals, risk, recommendation: recommendationResult.rows[0] };
+    return { student: signals, risk, recommendation };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

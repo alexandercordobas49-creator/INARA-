@@ -2,6 +2,7 @@ import { attendanceStatuses } from '../models/Attendance.js';
 import AttendanceRepository from '../repositories/AttendanceRepository.js';
 import XpRepository from '../repositories/XpRepository.js';
 import { pool } from '../config/database.js';
+import { evaluateStudentRisk } from '../services/riskService.js';
 
 export async function listAttendance(req, res) {
   try {
@@ -61,6 +62,8 @@ export async function saveAttendance(req, res) {
       await XpRepository.updateUserXp(userId, points);
       await XpRepository.updateLevel(userId);
     }
+
+    await evaluateStudentRisk(userId);
 
     return res.status(existing ? 200 : 201).json(record);
   } catch (error) {
