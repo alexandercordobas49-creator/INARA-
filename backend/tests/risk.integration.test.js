@@ -49,7 +49,7 @@ describe('Dropout prevention risk flow', () => {
     if (instructor.rowCount) {
       const intervention = await pool.query(`
         INSERT INTO interventions (student_id, created_by, risk_id, action_type, notes)
-        VALUES ($1,$2,$3,'contacted','Prueba de persistencia del seguimiento')
+        VALUES ($1,$2,$3,'CONTACT','Prueba de persistencia del seguimiento')
         RETURNING id
       `, [studentId, instructor.rows[0].id, riskId]);
       interventionId = intervention.rows[0].id;

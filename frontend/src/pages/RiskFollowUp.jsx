@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 
 const actionLabels = {
-  contacted: 'Contactó al estudiante',
-  meeting: 'Reunión realizada',
-  academic_guidance: 'Orientación académica',
-  pending: 'Seguimiento pendiente',
-  other: 'Otro'
+  CONTACT: 'Contacto con el estudiante',
+  MEETING: 'Reunión',
+  ACADEMIC_SUPPORT: 'Apoyo académico',
+  MOTIVATION: 'Acompañamiento motivacional',
+  PARENT_CONTACT: 'Contacto con la familia',
+  FOLLOW_UP: 'Seguimiento',
+  OTHER: 'Otro'
 };
 
 const levelLabels = {
@@ -33,7 +35,10 @@ function formatDate(value) {
 export default function RiskFollowUp() {
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
-  const [actionType, setActionType] = useState('contacted');
+  const [studentDetail, setStudentDetail] = useState(null);
+  const [actionType, setActionType] = useState('CONTACT');
+  const [status, setStatus] = useState('COMPLETED');
+  const [followUpDate, setFollowUpDate] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
@@ -54,6 +59,14 @@ export default function RiskFollowUp() {
   useEffect(() => {
     loadStudents();
   }, []);
+
+  useEffect(() => {
+    if (!selectedStudentId) {
+      setStudentDetail(null);
+      return;
+    }
+    api(`/risk/${selectedStudentId}`).then(setStudentDetail).catch(() => setStudentDetail(null));
+  }, [selectedStudentId]);
 
   async function evaluate(studentId) {
     setBusyId(studentId);
@@ -79,7 +92,10 @@ export default function RiskFollowUp() {
           studentId: student.studentId,
           riskId: student.id || null,
           actionType,
-          notes
+          notes,
+          status,
+          followUpDate: followUpDate || null,
+          recommendationId: student.recommendationId || null
         })
       });
       setNotes('');
@@ -159,6 +175,13 @@ export default function RiskFollowUp() {
                       <p className="mt-2 text-sm leading-6 text-slate-700">{student.recommendationMessage || 'Evaluar nuevamente para generar una recomendación.'}</p>
                     </div>
 
+                    <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-600">
+                      <span>Asistencia: {student.attendanceScore ?? 0}/100</span>
+                      <span>XP: {student.xpScore ?? 0}/100</span>
+                      <span>Actividad: {student.engagementScore ?? 0}/100</span>
+                      <span>Racha: {student.streakScore ?? 0}/100</span>
+                    </div>
+
                     {student.lastInterventionType && (
                       <p className="mt-4 text-xs font-semibold text-slate-500">
                         Última acción: {actionLabels[student.lastInterventionType] || student.lastInterventionType} · {formatDate(student.lastInterventionAt)}
@@ -191,10 +214,31 @@ export default function RiskFollowUp() {
 
                 {isSelected && (
                   <div className="mt-5 border-t border-slate-200 pt-5">
+                    {studentDetail?.history?.length > 0 && (
+                      <div className="mb-5 rounded-2xl bg-slate-50 p-4">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Historial de riesgo académico</p>
+                        <div className="mt-3 space-y-2">
+                          {studentDetail.history.slice().reverse().map((entry) => (
+                            <div key={entry.id} className="flex items-center justify-between gap-3 text-sm">
+                              <span className="font-semibold text-slate-600">{formatDate(entry.createdAt)}</span>
+                              <span className="font-black text-slate-900">{entry.riskScore}/100 · {levelLabels[entry.level]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <label className="block text-sm font-bold text-slate-700" htmlFor={`action-${student.studentId}`}>Acción realizada</label>
                     <select id={`action-${student.studentId}`} value={actionType} onChange={(event) => setActionType(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                       {Object.entries(actionLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                     </select>
+                    <label className="mt-4 block text-sm font-bold text-slate-700" htmlFor={`status-${student.studentId}`}>Estado</label>
+                    <select id={`status-${student.studentId}`} value={status} onChange={(event) => setStatus(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                      <option value="PENDING">Pendiente</option>
+                      <option value="IN_PROGRESS">En seguimiento</option>
+                      <option value="COMPLETED">Intervención realizada</option>
+                    </select>
+                    <label className="mt-4 block text-sm font-bold text-slate-700" htmlFor={`follow-up-${student.studentId}`}>Próximo seguimiento</label>
+                    <input id={`follow-up-${student.studentId}`} type="date" value={followUpDate} onChange={(event) => setFollowUpDate(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     <label className="mt-4 block text-sm font-bold text-slate-700" htmlFor={`notes-${student.studentId}`}>Notas</label>
                     <textarea id={`notes-${student.studentId}`} value={notes} onChange={(event) => setNotes(event.target.value)} rows="3" className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="Describe el seguimiento realizado." />
                     <button type="button" onClick={() => registerIntervention(student)} disabled={busyId === student.studentId} className="mt-3 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60">

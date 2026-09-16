@@ -34,7 +34,7 @@ La migración 011 agrega el flujo de prevención del abandono:
 
 - evaluaciones históricas en `student_risk`
 - recomendaciones enlazadas en `recommendations`
-- intervenciones docentes en `interventions`
+- intervenciones docentes en `interventions`, con estado, recomendación asociada y próxima fecha de seguimiento
 
 ## Verificación
 

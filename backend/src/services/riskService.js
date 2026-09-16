@@ -31,7 +31,7 @@ function recommendationFor(level, factors) {
 
   if (hasActivity || hasStreak) {
     return {
-      type: 'ATLAS',
+      type: 'MOTIVATION',
       title: 'Revisar la disminución de actividad',
       message: 'Atlas recomienda contactar al estudiante y verificar posibles causas de su disminución de actividad.'
     };
@@ -56,6 +56,7 @@ async function readSignals(client, studentId) {
       COALESCE(att.absent_sessions, 0)::int AS "absentSessions",
       COALESCE(att.recent_sessions, 0)::int AS "recentSessions",
       COALESCE(att.recent_absences, 0)::int AS "recentAbsences",
+      COALESCE(att.recent_lates, 0)::int AS "recentLates",
       COALESCE(xp.recent_events, 0)::int AS "recentXpEvents",
       COALESCE(xp.recent_points, 0)::int AS "recentXpPoints",
       COALESCE(streak.current_count, 0)::int AS "currentStreak",
@@ -68,7 +69,8 @@ async function readSignals(client, studentId) {
         COUNT(*) AS total_sessions,
         COUNT(*) FILTER (WHERE status = 'absent') AS absent_sessions,
         COUNT(*) FILTER (WHERE session_date >= CURRENT_DATE - INTERVAL '30 days') AS recent_sessions,
-        COUNT(*) FILTER (WHERE session_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'absent') AS recent_absences
+        COUNT(*) FILTER (WHERE session_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'absent') AS recent_absences,
+        COUNT(*) FILTER (WHERE session_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'late') AS recent_lates
       FROM attendance_records
       GROUP BY user_id
     ) att ON att.user_id = u.id
@@ -104,6 +106,7 @@ function evaluateSignals(signals) {
   const totalSessions = Number(signals.totalSessions);
   const recentSessions = Number(signals.recentSessions);
   const recentAbsences = Number(signals.recentAbsences);
+  const recentLates = Number(signals.recentLates);
   const recentXpEvents = Number(signals.recentXpEvents);
   const currentStreak = Number(signals.currentStreak);
   const routesStarted = Number(signals.routesStarted);
@@ -126,6 +129,9 @@ function evaluateSignals(signals) {
       attendanceScore = Math.max(attendanceScore, 65);
       factors.push({ code: 'attendance', label: 'No registra asistencia en los últimos 30 días.' });
     }
+    if (recentLates > 0) {
+      factors.push({ code: 'attendance', label: `${recentLates} tardanza${recentLates === 1 ? '' : 's'} en los últimos 30 días.` });
+    }
   }
 
   const activityScore = recentXpEvents === 0 ? 75 : recentXpEvents <= 2 ? 45 : 10;
@@ -147,11 +153,14 @@ function evaluateSignals(signals) {
     factors.push({ code: 'progress', label: 'No hay progreso de competencias registrado.' });
   }
 
+  const xpScore = Math.min(100, Number(signals.totalXp) < 200 ? 80 : recentXpEvents === 0 ? 70 : recentXpEvents <= 2 ? 40 : 10);
+  // Risk score: attendance 30%, accumulated/recent XP 20%, activity 20%, streak 15%, competency progress 15%.
   const score = Math.round(
-    attendanceScore * 0.35 +
-    activityScore * 0.25 +
-    streakScore * 0.2 +
-    progressScore * 0.2
+    attendanceScore * 0.3 +
+    xpScore * 0.2 +
+    activityScore * 0.2 +
+    streakScore * 0.15 +
+    progressScore * 0.15
   );
   const level = levelForScore(score);
 
@@ -159,7 +168,7 @@ function evaluateSignals(signals) {
     score,
     level,
     attendanceScore,
-    xpScore: Math.min(100, recentXpEvents === 0 ? 70 : recentXpEvents <= 2 ? 40 : 10),
+    xpScore,
     engagementScore: activityScore,
     streakScore,
     factors,
@@ -272,7 +281,9 @@ export async function listLatestRisks(scope) {
     )
     SELECT s.id AS "studentId", s.first_name AS "firstName", s.last_name AS "lastName", s.email,
       risk.id, risk.risk_score AS "riskScore", risk.level, risk.main_reason AS "mainReason",
-      risk.factors, risk.status, risk.created_at AS "createdAt", risk.last_evaluated_at AS "lastEvaluatedAt",
+      risk.factors, risk.status, risk.attendance_score AS "attendanceScore", risk.xp_score AS "xpScore",
+      risk.engagement_score AS "engagementScore", risk.streak_score AS "streakScore",
+      risk.created_at AS "createdAt", risk.last_evaluated_at AS "lastEvaluatedAt",
       rec.title AS "recommendationTitle", rec.message AS "recommendationMessage",
       rec.is_applied AS "recommendationApplied",
       intervention.action_type AS "lastInterventionType", intervention.created_at AS "lastInterventionAt"
@@ -312,4 +323,44 @@ export async function getRecommendations(studentId) {
     ORDER BY created_at DESC
   `, [studentId]);
   return result.rows;
+}
+
+export async function getRiskHistory(studentId) {
+  const result = await pool.query(`
+    SELECT id, student_id AS "studentId", risk_score AS "riskScore", level,
+      attendance_score AS "attendanceScore", xp_score AS "xpScore",
+      engagement_score AS "engagementScore", streak_score AS "streakScore",
+      main_reason AS "mainReason", factors, status,
+      created_at AS "createdAt", last_evaluated_at AS "lastEvaluatedAt"
+    FROM student_risk
+    WHERE student_id=$1
+    ORDER BY created_at ASC
+  `, [studentId]);
+  return result.rows;
+}
+
+export async function getInterventions(studentId) {
+  const result = await pool.query(`
+    SELECT i.id, i.student_id AS "studentId", i.created_by AS "createdBy", i.risk_id AS "riskId",
+      i.recommendation_id AS "recommendationId", i.action_type AS "actionType", i.notes, i.status,
+      i.follow_up_date AS "followUpDate", i.completed_at AS "completedAt", i.created_at AS "createdAt",
+      u.first_name AS "createdByFirstName", u.last_name AS "createdByLastName"
+    FROM interventions i
+    JOIN users u ON u.id = i.created_by
+    WHERE i.student_id = $1
+    ORDER BY i.created_at DESC
+  `, [studentId]);
+  return result.rows;
+}
+
+export async function updateRecommendation(recommendationId, changes) {
+  const result = await pool.query(`
+    UPDATE recommendations
+    SET is_read = COALESCE($1, is_read), is_applied = COALESCE($2, is_applied)
+    WHERE recommendation_id=$3
+    RETURNING recommendation_id AS id, student_id AS "studentId", recommendation_type AS type,
+      priority, source, title, message, related_risk_id AS "relatedRiskId",
+      is_read AS "isRead", is_applied AS "isApplied", created_at AS "createdAt"
+  `, [changes.isRead ?? null, changes.isApplied ?? null, recommendationId]);
+  return result.rows[0] || null;
 }

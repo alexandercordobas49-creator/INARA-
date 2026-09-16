@@ -1,4 +1,5 @@
 import { pool } from '../config/database.js';
+import { getLatestRisk } from '../services/riskService.js';
 
 function publicUser(row) {
   if (!row) return null;
@@ -135,14 +136,8 @@ export async function parentView(req, res) {
     const dashboard = await getStudentDashboard(childId);
     if (!dashboard) return res.status(404).json({ message: 'Estudiante no encontrado' });
 
-    const summary = dashboard.attendanceSummary;
-    const streak = dashboard.streak || { currentCount: 0 };
-    const alerts = [];
-    if (summary.absent >= 3) alerts.push({ level: 'high', message: 'Alto riesgo por ausencias frecuentes' });
-    if ((streak.currentCount || 0) <= 1) alerts.push({ level: 'medium', message: 'Baja actividad reciente' });
-    if ((dashboard.xp.total || 0) < 200) alerts.push({ level: 'low', message: 'Progreso bajo en XP' });
-
-    return res.json({ ...dashboard, alerts });
+    const risk = await getLatestRisk(childId);
+    return res.json({ ...dashboard, risk, alerts: risk ? [{ level: risk.level, message: risk.mainReason }] : [] });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Error obteniendo vista familiar' });

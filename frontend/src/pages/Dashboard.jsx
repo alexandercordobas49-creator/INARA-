@@ -5,25 +5,10 @@ import RiskFollowUp from './RiskFollowUp.jsx';
 
 export default function Dashboard({ selectedStudent, session }) {
   const [dashboard, setDashboard] = useState(null);
+  const [riskData, setRiskData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modal, setModal] = useState(null);
-
-  const mockData = {
-    xp: { total: 2450, currentLevel: 8, progressToNextLevel: 72 },
-    attendanceSummary: { total: 25, present: 18 },
-    streak: { currentCount: 12 },
-    achievements: [
-      { id: 1, achievement: { name: 'Constante', description: 'Estudia 7 días seguidos' } },
-      { id: 2, achievement: { name: 'Dedicado', description: 'Completa 10 clases' } },
-      { id: 3, achievement: { name: 'Enfocado', description: 'Alcanza una meta mensual' } }
-    ],
-    xpEvents: [
-      { id: 1, description: 'Completaste Matemáticas: Funciones', points: 120 },
-      { id: 2, description: 'Obtuviste el logro «Constante»', points: 200 },
-      { id: 3, description: 'Iniciaste sesión 7 días seguidos', points: 100 }
-    ]
-  };
 
   useEffect(() => {
     if (!selectedStudent?.id) return;
@@ -33,15 +18,20 @@ export default function Dashboard({ selectedStudent, session }) {
         setLoading(true);
         setError(null);
 
-        const res = await api(`/dashboard/student/${selectedStudent.id}`);
+        const [res, risk] = await Promise.all([
+          api(`/dashboard/student/${selectedStudent.id}`),
+          api(`/risk/${selectedStudent.id}`)
+        ]);
 
         if (!res) throw new Error('Respuesta vacía del servidor');
 
         setDashboard(res);
+        setRiskData(risk);
       } catch (err) {
         console.error(err);
-        // Usar datos simulados si hay error
-        setDashboard(mockData);
+        setDashboard(null);
+        setRiskData(null);
+        setError(err.message || 'No se pudo cargar el progreso desde PostgreSQL.');
       } finally {
         setLoading(false);
       }
@@ -75,17 +65,18 @@ export default function Dashboard({ selectedStudent, session }) {
     );
   }
 
-  const xpTotal = dashboard?.xp?.total || 2450;
-  const currentLevel = dashboard?.xp?.currentLevel || 8;
-  const progressPercentage = dashboard?.xp?.progressToNextLevel || 72;
+  const xpTotal = dashboard?.xp?.total ?? 0;
+  const currentLevel = dashboard?.xp?.currentLevel ?? 1;
+  const progressPercentage = dashboard?.xp?.progressToNextLevel ?? 0;
   const attendanceRate = dashboard?.attendanceSummary?.total
     ? Math.round(
         (dashboard.attendanceSummary.present / dashboard.attendanceSummary.total) * 100
       )
     : 0;
-  const streak = dashboard?.streak?.currentCount || 12;
+  const streak = dashboard?.streak?.currentCount ?? 0;
   const achievements = dashboard?.achievements || [];
   const xpEvents = dashboard?.xpEvents || [];
+  const attendanceTotal = dashboard?.attendanceSummary?.total ?? 0;
 
   // Handlers
   const handleViewProgress = () => {
@@ -175,6 +166,43 @@ export default function Dashboard({ selectedStudent, session }) {
         </p>
       </div>
 
+      {error && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-800" role="status">
+          No se pudo cargar todo el progreso desde PostgreSQL: {error}
+        </div>
+      )}
+
+      <section className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-cyan-50 p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Evolución del progreso académico</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-950">Señales para seguir avanzando</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              INARA muestra señales académicas reales para orientar próximos pasos, no un diagnóstico definitivo.
+            </p>
+          </div>
+          {riskData?.risk ? (
+            <div className="rounded-2xl bg-white px-5 py-4 text-right shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Evaluación actual</p>
+              <p className="mt-1 text-3xl font-black text-slate-950">{riskData.risk.riskScore}/100</p>
+              <p className="text-sm font-bold uppercase text-emerald-700">Riesgo {riskData.risk.level}</p>
+            </div>
+          ) : (
+            <p className="rounded-2xl bg-white px-5 py-4 text-sm font-semibold text-slate-600">Aún no hay evaluación registrada.</p>
+          )}
+        </div>
+        {riskData?.risk?.mainReason && (
+          <div className="mt-5 rounded-xl bg-white/80 px-4 py-3 text-sm text-slate-700">
+            <strong>Señal principal:</strong> {riskData.risk.mainReason}
+          </div>
+        )}
+        {riskData?.risk?.recommendationMessage && (
+          <div className="mt-3 rounded-xl bg-cyan-50 px-4 py-3 text-sm text-slate-700">
+            <strong>Recomendación:</strong> {riskData.risk.recommendationMessage}
+          </div>
+        )}
+      </section>
+
       {/* Progreso General */}
       <div className="rounded-2xl bg-white p-10 border border-neutral-100 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.06)] relative overflow-hidden">
         <div className="relative z-10 grid md:grid-cols-2 gap-10">
@@ -194,8 +222,8 @@ export default function Dashboard({ selectedStudent, session }) {
           <div className="grid grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl mb-2">📚</p>
-              <p className="text-xs font-semibold text-neutral-500">Clases completadas</p>
-              <p className="text-2xl font-extrabold mt-2 text-neutral-900">18 / 25</p>
+              <p className="text-xs font-semibold text-neutral-500">Registros de asistencia</p>
+              <p className="text-2xl font-extrabold mt-2 text-neutral-900">{attendanceTotal}</p>
             </div>
             <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl mb-2">🔥</p>
@@ -309,19 +337,16 @@ export default function Dashboard({ selectedStudent, session }) {
               <button onClick={handleViewProgress} className="text-xs text-emerald-600 font-semibold hover:underline cursor-pointer">Ver toda la actividad</button>
             </div>
             <div className="space-y-3">
-              {[
-                { activity: 'Completaste Matemáticas: Funciones', points: 120, time: 'Hace 2 horas' },
-                { activity: 'Obtuviste el logro «Constante»', points: 200, time: 'Ayer' },
-                { activity: 'Iniciaste sesión 7 días seguidos', points: 100, time: 'Ayer' }
-              ].map((event, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
+              {xpEvents.map((event) => (
+                <div key={event.id} className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{event.activity}</p>
-                    <p className="text-xs text-slate-500 mt-1">{event.time}</p>
+                    <p className="text-sm font-semibold text-slate-900">{event.description || event.source || 'Actividad académica'}</p>
+                    <p className="text-xs text-slate-500 mt-1">{new Intl.DateTimeFormat('es-NI', { dateStyle: 'medium' }).format(new Date(event.createdAt))}</p>
                   </div>
                   <span className="text-sm font-bold text-emerald-600">+{event.points} XP</span>
                 </div>
               ))}
+              {!xpEvents.length && <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">Aún no hay actividad XP registrada.</p>}
             </div>
           </div>
         </div>

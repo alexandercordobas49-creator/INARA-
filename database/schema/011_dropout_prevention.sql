@@ -73,10 +73,19 @@ CREATE TABLE IF NOT EXISTS interventions (
   student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_by UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   risk_id UUID REFERENCES student_risk(id) ON DELETE SET NULL,
-  action_type VARCHAR(40) NOT NULL CHECK (action_type IN ('contacted', 'meeting', 'academic_guidance', 'pending', 'other')),
+  recommendation_id UUID REFERENCES recommendations(recommendation_id) ON DELETE SET NULL,
+  action_type VARCHAR(40) NOT NULL CHECK (action_type IN ('CONTACT', 'MEETING', 'ACADEMIC_SUPPORT', 'MOTIVATION', 'PARENT_CONTACT', 'FOLLOW_UP', 'OTHER')),
   notes TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'COMPLETED' CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED')),
+  follow_up_date DATE,
+  completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE interventions ADD COLUMN IF NOT EXISTS recommendation_id UUID REFERENCES recommendations(recommendation_id) ON DELETE SET NULL;
+ALTER TABLE interventions ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'COMPLETED';
+ALTER TABLE interventions ADD COLUMN IF NOT EXISTS follow_up_date DATE;
+ALTER TABLE interventions ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS idx_interventions_student_created
   ON interventions(student_id, created_at DESC);
