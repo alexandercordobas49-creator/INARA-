@@ -6,13 +6,20 @@ dotenv.config();
 const { Pool } = pg;
 
 const useTest = process.env.NODE_ENV === 'test';
+const testDatabase = process.env.DB_NAME_TEST || 'inara_test';
+
+if (useTest) {
+  if (!/^[a-z0-9_]*_test$/i.test(testDatabase)) {
+    throw new Error('NODE_ENV=test requiere DB_NAME_TEST con sufijo _test; no se permite usar la base de desarrollo');
+  }
+}
 
 export const pool = new Pool({
-  host: useTest ? process.env.DB_HOST_TEST || process.env.DB_HOST : process.env.DB_HOST,
-  port: Number(useTest ? (process.env.DB_PORT_TEST || process.env.DB_PORT) : process.env.DB_PORT),
-  database: useTest ? process.env.DB_NAME_TEST || process.env.DB_NAME : process.env.DB_NAME,
-  user: useTest ? process.env.DB_USER_TEST || process.env.DB_USER : process.env.DB_USER,
-  password: useTest ? process.env.DB_PASSWORD_TEST || process.env.DB_PASSWORD : process.env.DB_PASSWORD,
+  host: useTest ? process.env.DB_HOST_TEST : process.env.DB_HOST,
+  port: Number(useTest ? process.env.DB_PORT_TEST : process.env.DB_PORT),
+  database: useTest ? testDatabase : process.env.DB_NAME,
+  user: useTest ? process.env.DB_USER_TEST : process.env.DB_USER,
+  password: useTest ? process.env.DB_PASSWORD_TEST : process.env.DB_PASSWORD,
 });
 
 export async function connectDatabase() {
@@ -21,8 +28,7 @@ export async function connectDatabase() {
 
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("✅ PostgreSQL Connected");
-    console.log(`📦 Database: ${process.env.DB_NAME}`);
-    console.log(`👤 User: ${process.env.DB_USER}`);
+    console.log(`📦 Database: ${process.env.NODE_ENV === 'test' ? process.env.DB_NAME_TEST : process.env.DB_NAME}`);
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     client.release();

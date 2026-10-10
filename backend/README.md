@@ -40,6 +40,8 @@ La variable `JWT_SECRET` es obligatoria en producción y debe tener al menos 32 
 - `POST /api/auth/forgot` — Solicita restablecimiento de contraseña con `{ email }`.
 - `POST /api/auth/reset` — Restablece la contraseña con `{ email, token, password }`.
 
+El puerto de desarrollo del backend se define con `PORT` (predeterminado `4000`). En `frontend/.env` configura `VITE_API_PROXY_TARGET=http://localhost:4000` si cambias ese puerto; el build de producción debe apuntar a la URL pública mediante `VITE_API_URL`, no al proxy local.
+
 ## Recuperación de contraseñas
 
 El flujo de recuperación usa tokens aleatorios cargados en PostgreSQL con hash SHA-256, expiración y un solo uso. Si no se configura el servicio SMTP, el backend responde con un mensaje genérico y no simula que el correo fue enviado.
@@ -99,8 +101,11 @@ npm run dev
 
 ## Notas adicionales
 
-- El archivo `src/config/database.js` usa variables con sufijo `_TEST` cuando `NODE_ENV=test`.
-- El script `backend/scripts/setup_test_db.js` aplica `database/schema.sql` a la base de datos configurada.
+- El archivo `src/config/database.js` usa variables con sufijo `_TEST` cuando `NODE_ENV=test` y nunca recurre a `DB_NAME` en pruebas.
+- El script `backend/scripts/setup_test_db.js` aplica el esquema base y todas las migraciones pendientes a una base que debe terminar en `_test`; rechaza bases con tablas no registradas para evitar modificar datos desconocidos.
 - No se debe explotar información interna en errores ni devolver tokens de recuperación en respuestas de producción.
-- Para una base existente, aplica las migraciones de `database/schema/` en orden. `010_attendance_xp_awarded.sql` agrega la protección de XP por asistencia y marca como premiadas las asistencias previas presentes/tardías. `011_auth_sessions_password_reset.sql` prepara las tablas de sesiones y recuperación de contraseña y agrega el rol `parent`.
+- Para una base existente, aplica en orden `database/schema/007_course_students.sql`, `008_student_risk.sql`, `database/009_recommendations.sql`, `database/schema/010_attendance_xp_awarded.sql`, `011_auth_sessions_password_reset.sql`, `012_json_backed_application_data.sql` y `013_case_insensitive_user_email.sql`. La migración `010` agrega la protección de XP por asistencia; `011` agrega sesiones, recuperación y el rol `parent`; `013` requiere resolver primero direcciones duplicadas que solo difieran en mayúsculas/minúsculas.
 - La creación de asistencia requiere una matrícula activa en `course_students`. El esquema principal crea esta tabla; si una base previa aún no la tiene, aplica `database/schema/007_course_students.sql`.
+- `012_json_backed_application_data.sql` crea las tablas PostgreSQL para vínculos familiares, rutas de competencias, progreso, evidencias y notificaciones.
+- Para fusionar datos JSON antiguos de forma no destructiva, establece `CONFIRM_JSON_IMPORT_DB` exactamente al nombre de `DB_NAME` y ejecuta `npm run migrate:json` como simulación. Revisa los conteos; después ejecuta `npm run migrate:json -- --apply`. El script solo enlaza usuarios por email y cursos por nombre que ya existan en PostgreSQL, no importa contraseñas de texto plano ni elimina/modifica el JSON de origen; los registros sin correspondencia se contabilizan para resolución manual.
+- `backend/src/data/database.json` es solo una fuente heredada para la importación explícita: no se lee durante el funcionamiento normal. Trátalo como información sensible, no copies sus contraseñas a PostgreSQL y conserva el archivo hasta comprobar la importación y el respaldo de datos.

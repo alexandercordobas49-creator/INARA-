@@ -69,6 +69,16 @@ describe('Auth DB integration (requires DB)', () => {
 
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.token).toBeTruthy();
+
+    const logoutRes = await request(app)
+      .post('/api/auth/logout')
+      .set('Authorization', `Bearer ${loginRes.body.token}`);
+    expect(logoutRes.status).toBe(204);
+
+    const revokedSessionRes = await request(app)
+      .get(`/api/achievements/${registerRes.body.user.id}`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`);
+    expect(revokedSessionRes.status).toBe(401);
   });
 
   it('rejects invalid login credentials without revealing account existence', async () => {

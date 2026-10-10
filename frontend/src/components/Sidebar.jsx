@@ -1,15 +1,13 @@
 import { NavLink } from 'react-router-dom';
 
-export default function Sidebar({ session, onLogout }) {
+export default function Sidebar({ session, profile, onLogout }) {
   const menuItems = [
     { id: 'dashboard', label: 'Inicio', icon: '🏠', path: '/dashboard' },
     { id: 'progress', label: 'Mi progreso', icon: '📊', path: '/progress' },
     { id: 'attendance', label: 'Asistencia', icon: '📋', path: '/attendance' },
     { id: 'courses', label: 'Mis clases', icon: '📚', path: '/courses' },
-    { id: 'goals', label: 'Metas', icon: '🎯', path: '/goals' },
     { id: 'rewards', label: 'Recompensas', icon: '🎁', path: '/rewards' },
     { id: 'atlas', label: 'Compañero Digital', icon: '🤖', path: '/atlas' },
-    { id: 'community', label: 'Comunidad', icon: '👥', path: '/community' }
   ];
 
   return (
@@ -56,45 +54,34 @@ export default function Sidebar({ session, onLogout }) {
         </div>
       </nav>
 
-      {/* Racha */}
-      <div className="mb-6 rounded-[34px] bg-gradient-to-br from-emerald-500/15 to-cyan-500/10 p-5 backdrop-blur-2xl ring-1 ring-white/10 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1">
-        <div className="flex items-center gap-3 mb-3">
-          <span className="text-2xl">🔥</span>
-          <div>
-            <p className="text-sm font-semibold text-white">Racha actual</p>
-            <p className="text-xs text-emerald-100">Tu impulso de hoy</p>
-          </div>
-        </div>
-        <p className="text-3xl font-extrabold text-white tracking-tight">12 días</p>
-        <p className="text-xs text-emerald-200 mt-2">¡Sigue así, lo estás logrando!</p>
-      </div>
-
       {/* Perfil */}
       {session?.user && (
         <div className="space-y-4 border-t border-white/10 pt-4">
           <div className="flex items-center gap-3">
             <div className="h-14 w-14 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-xl font-bold text-white shadow-[0_20px_60px_-30px_rgba(0,0,0,0.4)]">
-              {session.user.firstName?.[0]}{session.user.lastName?.[0]}
+              {profile?.firstName?.[0]}{profile?.lastName?.[0]}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-white">{session.user.firstName} {session.user.lastName}</p>
+              <p className="text-sm font-bold text-white">{profile?.firstName} {profile?.lastName}</p>
               <p className="text-xs text-emerald-200 uppercase tracking-[0.12em]">{session.user.role}</p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between bg-white/10 rounded-[26px] p-4 ring-1 ring-white/10 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-0.5">
+          {typeof profile?.totalXp === 'number' && (
+            <div className="flex items-center justify-between bg-white/10 rounded-[26px] p-4 ring-1 ring-white/10 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.35)]">
               <div className="flex items-center gap-3">
                 <span className="text-lg">⚡</span>
                 <p className="text-xs font-semibold text-emerald-100">XP</p>
               </div>
-              <p className="font-extrabold text-white">2,450</p>
+              <p className="font-extrabold text-white">{profile.totalXp.toLocaleString()}</p>
             </div>
-            <div className="flex items-center gap-3 bg-white/10 rounded-[26px] px-4 py-3 ring-1 ring-white/10 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-0.5">
+          )}
+          {typeof profile?.currentLevel === 'number' && (
+            <div className="flex items-center gap-3 bg-white/10 rounded-[26px] px-4 py-3 ring-1 ring-white/10 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.25)]">
               <span className="text-lg">📊</span>
-              <span className="text-xs font-bold text-white">Nivel 8</span>
+              <span className="text-xs font-bold text-white">Nivel {profile.currentLevel}</span>
             </div>
-          </div>
+          )}
 
           <button
             onClick={onLogout}

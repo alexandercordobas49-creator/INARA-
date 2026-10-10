@@ -18,6 +18,9 @@ CREATE TABLE users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX users_email_case_insensitive_idx
+  ON users (LOWER(email));
+
 CREATE TABLE password_reset_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -34,6 +37,17 @@ CREATE TABLE sessions (
   issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   revoked_at TIMESTAMPTZ,
   expires_at TIMESTAMPTZ
+);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(40);
+
+CREATE TABLE parent_student_relations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (parent_id, student_id),
+  CHECK (parent_id <> student_id)
 );
 
 CREATE TABLE courses (
@@ -77,6 +91,7 @@ CREATE TABLE xp_events (
   points INTEGER NOT NULL,
   source xp_event_type NOT NULL,
   description TEXT,
+  source_legacy_key TEXT UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -96,6 +111,52 @@ CREATE TABLE user_achievements (
   UNIQUE (user_id, achievement_id)
 );
 
+CREATE TABLE competency_routes (
+  route_id TEXT PRIMARY KEY,
+  name VARCHAR(160) NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  icon TEXT NOT NULL DEFAULT '',
+  missions JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(missions) = 'array'),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE user_competency_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  route_id TEXT NOT NULL REFERENCES competency_routes(route_id) ON DELETE CASCADE,
+  completed_missions TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, route_id)
+);
+
+CREATE TABLE competency_evidence (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  progress_id UUID NOT NULL REFERENCES user_competency_progress(id) ON DELETE CASCADE,
+  mission_id TEXT NOT NULL,
+  evidence_type VARCHAR(40) NOT NULL,
+  title VARCHAR(160) NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL DEFAULT '',
+  source_legacy_key TEXT UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  to_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  student_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  alert_level VARCHAR(20) NOT NULL,
+  message TEXT NOT NULL,
+  channel VARCHAR(20) NOT NULL DEFAULT 'email',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  dedupe_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at TIMESTAMPTZ,
+  delivery_info JSONB,
+  UNIQUE (to_user_id, student_id, alert_level, channel, dedupe_date)
+);
+
 CREATE TABLE streaks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -104,12 +165,21 @@ CREATE TABLE streaks (
   best_count INTEGER NOT NULL DEFAULT 0 CHECK (best_count >= 0),
   last_activity_date DATE,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  source_legacy_key TEXT,
   UNIQUE (user_id, course_id)
 );
+
+CREATE UNIQUE INDEX idx_streaks_legacy_key
+  ON streaks(source_legacy_key)
+  WHERE source_legacy_key IS NOT NULL;
 
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_course_students_course ON course_students(course_id);
 CREATE INDEX idx_course_students_student ON course_students(student_id);
+CREATE INDEX idx_parent_student_relations_parent ON parent_student_relations(parent_id);
+CREATE INDEX idx_parent_student_relations_student ON parent_student_relations(student_id);
+CREATE INDEX idx_competency_progress_user ON user_competency_progress(user_id);
+CREATE INDEX idx_notifications_user_created ON notifications(to_user_id, created_at DESC);
 CREATE INDEX idx_attendance_user ON attendance_records(user_id);
 CREATE INDEX idx_xp_user_created ON xp_events(user_id, created_at DESC);
 CREATE INDEX idx_streaks_user ON streaks(user_id);

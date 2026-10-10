@@ -50,7 +50,7 @@ export async function findUserByEmail(email) {
         `
         SELECT *
         FROM users
-        WHERE email=$1
+        WHERE LOWER(email) = LOWER($1)
         `,
         [email]
     );

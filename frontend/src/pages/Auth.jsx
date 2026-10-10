@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { api, notify } from '../api.js';
 
 export default function Auth({ onSession }) {
-  const [loginForm, setLoginForm] = useState({ email: 'valeria@INARA.test', password: 'demo123' });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({
     firstName: '',
     lastName: '',
@@ -134,8 +134,8 @@ export default function Auth({ onSession }) {
               <div className="flex gap-3">
                 <span className="text-5xl flex-shrink-0">🤖</span>
                 <div>
-                  <p className="font-bold text-violet-300">Con IA que te acompaña</p>
-                  <p className="text-xs text-slate-300">Seguimiento, motivación y éxito académico en un solo lugar</p>
+                  <p className="font-bold text-violet-300">Seguimiento académico</p>
+                  <p className="text-xs text-slate-300">Consulta el progreso y la asistencia registrados</p>
                 </div>
               </div>
             </div>

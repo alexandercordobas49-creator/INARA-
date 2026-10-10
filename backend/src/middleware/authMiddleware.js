@@ -54,15 +54,24 @@ export async function authenticateToken(req, res, next) {
     });
   }
 
+  let payload;
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    payload = jwt.verify(token, JWT_SECRET);
+  } catch {
+    return res.status(401).json({
+      message: 'Token inválido o expirado'
+    });
+  }
 
-    if (!payload || !payload.id || !payload.sid) {
-      return res.status(401).json({
-        message: 'Token inválido'
-      });
-    }
+  if (!payload || typeof payload !== 'object' || !payload.id || !payload.sid) {
+    return res.status(401).json({
+      message: 'Token inválido'
+    });
+  }
 
+  let activeSession;
+  let user;
+  try {
     const session = await pool.query(
       `
         SELECT id, user_id, token_hash, revoked_at, expires_at
@@ -72,7 +81,7 @@ export async function authenticateToken(req, res, next) {
       [payload.sid, payload.id]
     );
 
-    const activeSession = session.rows[0];
+    activeSession = session.rows[0];
     if (!activeSession || activeSession.revoked_at || new Date(activeSession.expires_at) < new Date()) {
       return res.status(401).json({
         message: 'Token inválido o expirado'
@@ -84,22 +93,22 @@ export async function authenticateToken(req, res, next) {
         message: 'Token inválido o expirado'
       });
     }
-
-    const user = await findUserById(payload.id);
-
-    if (!user) {
-      return res.status(401).json({
-        message: 'Token inválido'
-      });
-    }
-
-    req.user = user;
-    return next();
+    req.sessionId = activeSession.id;
+    req.sessionId = activeSession.id;
+    user = await findUserById(payload.id);
   } catch (error) {
+    console.error('Unable to validate authenticated session:', error.message);
+    return res.status(500).json({ message: 'No se pudo validar la sesión' });
+  }
+
+  if (!user) {
     return res.status(401).json({
-      message: 'Token inválido o expirado'
+      message: 'Token inválido'
     });
   }
+
+  req.user = user;
+  return next();
 }
 
 export function authorizeRoles(...allowedRoles) {

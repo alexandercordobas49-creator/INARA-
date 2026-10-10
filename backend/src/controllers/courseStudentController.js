@@ -1,13 +1,27 @@
 import CourseStudentRepository from "../repositories/CourseStudentRepository.js";
 import { pool } from "../config/database.js";
-import { readData, isParentOf } from '../data/store.js';
+import FamilyRepository from '../repositories/FamilyRepository.js';
 
-function canAccessStudent(actor, targetUserId) {
+async function canAccessStudent(actor, targetUserId) {
     if (actor.role === 'admin') return true;
     if (actor.role === 'student') return actor.id === targetUserId;
     if (actor.role === 'parent') {
-        const data = readData();
-        return isParentOf(data, actor.id, targetUserId);
+        return FamilyRepository.isParentOf(actor.id, targetUserId);
+    }
+    if (actor.role === 'instructor') {
+        const assignment = await pool.query(
+            `
+              SELECT 1
+              FROM course_students cs
+              JOIN courses c ON c.id = cs.course_id
+              WHERE cs.student_id = $1
+                AND cs.status = 'active'
+                AND c.instructor_id = $2
+              LIMIT 1
+            `,
+            [targetUserId, actor.id]
+        );
+        return assignment.rows.length > 0;
     }
     return false;
 }
@@ -62,11 +76,13 @@ export async function listCoursesByStudent(req, res) {
     try {
         const targetUserId = req.params.id;
 
-        if (!canAccessStudent(req.user, targetUserId)) {
+        if (!(await canAccessStudent(req.user, targetUserId))) {
             return res.status(403).json({ message: 'No autorizado' });
         }
 
-        const data = await CourseStudentRepository.findByStudent(targetUserId);
+        const data = req.user.role === 'instructor'
+            ? await CourseStudentRepository.findByStudentAndInstructor(targetUserId, req.user.id)
+            : await CourseStudentRepository.findByStudent(targetUserId);
         return res.json(data);
     } catch (error) {
         console.error(error);
@@ -118,11 +134,19 @@ export async function createCourseStudent(req, res) {
             return res.status(400).json({ message: 'El usuario indicado no es un estudiante válido' });
         }
 
-        const enrollment = await CourseStudentRepository.create({
-            course_id,
-            student_id,
-            status
-        });
+        let enrollment;
+        try {
+            enrollment = await CourseStudentRepository.create({
+                course_id,
+                student_id,
+                status
+            });
+        } catch (error) {
+            if (error.code === '23505') {
+                return res.status(409).json({ message: 'El estudiante ya está matriculado en este curso' });
+            }
+            throw error;
+        }
 
         return res.status(201).json(enrollment);
     } catch (error) {

@@ -114,6 +114,23 @@ export async function login(req, res) {
   });
 }
 
+export async function logout(req, res) {
+  try {
+    await pool.query(
+      `
+        UPDATE sessions
+        SET revoked_at = NOW(), expires_at = NOW()
+        WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL
+      `,
+      [req.sessionId, req.user.id]
+    );
+    return res.status(204).end();
+  } catch (error) {
+    console.error('Unable to revoke session:', error.message);
+    return res.status(500).json({ message: 'No se pudo cerrar la sesión en el servidor' });
+  }
+}
+
 export async function register(req, res) {
   const {
     firstName,

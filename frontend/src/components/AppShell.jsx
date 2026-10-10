@@ -2,7 +2,7 @@ import Sidebar from './Sidebar.jsx';
 import Toasts from './Toasts.jsx';
 import { ToastProvider } from '../contexts/ToastContext.jsx';
 
-export default function AppShell({ modules, activeModule, onSelectModule, session, onLogout, children }) {
+export default function AppShell({ modules, activeModule, onSelectModule, session, profile, onLogout, children }) {
   const icons = {
     auth: '🏠',
     roles: '👥',
@@ -20,8 +20,9 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
     return (
       <ToastProvider>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-violet-50">
-          <Sidebar 
+          <Sidebar
             session={session} 
+            profile={profile}
             onLogout={onLogout} 
           />
           <main className="ml-56 min-h-screen">
@@ -40,7 +41,7 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
               <div className="flex items-center gap-4">
                 <button className="p-2 rounded-2xl hover:bg-slate-100 transition-all text-xl">🔔</button>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">
-                  {session.user?.firstName?.[0]}{session.user?.lastName?.[0]}
+                  {profile?.firstName?.[0]}{profile?.lastName?.[0]}
                 </div>
               </div>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-emerald-300/40 via-slate-300/0 to-cyan-300/40" />

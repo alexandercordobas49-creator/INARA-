@@ -1,8 +1,8 @@
 import XPService from "../services/xpService.js";
 import { findUserById } from "../repositories/UserRepository.js";
-import { isParentOf, readData } from '../data/store.js';
+import FamilyRepository from '../repositories/FamilyRepository.js';
 
-function canAccessUser(actor, targetUserId) {
+async function canAccessUser(actor, targetUserId) {
     if (actor.role === 'admin') {
         return true;
     }
@@ -12,8 +12,7 @@ function canAccessUser(actor, targetUserId) {
     }
 
     if (actor.role === 'parent') {
-        const data = readData();
-        return isParentOf(data, actor.id, targetUserId);
+          return FamilyRepository.isParentOf(actor.id, targetUserId);
     }
 
     return false;
@@ -23,7 +22,7 @@ export async function xpSummary(req, res) {
     try {
         const userId = req.params.userId;
 
-        if (!canAccessUser(req.user, userId)) {
+        if (!(await canAccessUser(req.user, userId))) {
             return res.status(403).json({ message: 'No autorizado' });
         }
 

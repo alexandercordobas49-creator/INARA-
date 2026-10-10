@@ -35,10 +35,13 @@ const AttendanceRepository = {
             `
             SELECT
                 ar.*,
-                c.name AS course_name
+                c.name AS course_name,
+                u.first_name,
+                u.last_name
             FROM attendance_records ar
             JOIN courses c
             ON c.id = ar.course_id
+            JOIN users u ON u.id = ar.user_id
             WHERE ar.user_id = $1
             ORDER BY ar.session_date DESC
             `,
@@ -56,6 +59,10 @@ const AttendanceRepository = {
                 c.name AS course_name
             FROM attendance_records ar
             JOIN courses c ON c.id = ar.course_id
+            JOIN course_students cs
+              ON cs.course_id = ar.course_id
+             AND cs.student_id = ar.user_id
+             AND cs.status = 'active'
             WHERE ar.user_id = $1
               AND c.instructor_id = $2
             ORDER BY ar.session_date DESC

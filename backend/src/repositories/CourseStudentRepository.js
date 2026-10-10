@@ -64,6 +64,28 @@ const CourseStudentRepository = {
         return result.rows;
     },
 
+    async findByStudentAndInstructor(student_id, instructor_id) {
+        const result = await pool.query(
+            `
+            SELECT
+                cs.id,
+                cs.course_id,
+                cs.student_id,
+                cs.status,
+                cs.enrolled_at
+            FROM course_students cs
+            JOIN courses c ON c.id = cs.course_id
+            WHERE cs.student_id = $1
+              AND cs.status = 'active'
+              AND c.instructor_id = $2
+            ORDER BY cs.enrolled_at DESC
+            `,
+            [student_id, instructor_id]
+        );
+
+        return result.rows;
+    },
+
 
 
     async create(data) {

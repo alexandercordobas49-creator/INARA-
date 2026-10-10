@@ -2,21 +2,56 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import ModuleHeader from '../components/ModuleHeader.jsx';
 import Panel from '../components/Panel.jsx';
+import StudentSelector from '../components/StudentSelector.jsx';
 
-export default function Achievements({ selectedStudent }) {
+export default function Achievements({ session, users }) {
   const [summary, setSummary] = useState(null);
+  const [error, setError] = useState('');
+  const isStudent = session?.user?.role === 'student';
+  const students = isStudent ? [session.user] : users.filter((user) => user.role === 'student');
+  const [studentId, setStudentId] = useState(isStudent ? session.user.id : '');
 
   useEffect(() => {
-    if (selectedStudent?.id) {
-      api(`/achievements/${selectedStudent.id}`).then(setSummary).catch(console.error);
+    if (isStudent) {
+      setStudentId(session.user.id);
+    } else if (studentId && !students.some((student) => student.id === studentId)) {
+      setStudentId('');
+    } else if (!studentId && students.length === 1) {
+      setStudentId(students[0].id);
     }
-  }, [selectedStudent?.id]);
+  }, [isStudent, session?.user?.id, students, studentId]);
 
-  if (!selectedStudent) {
-    return <ModuleHeader eyebrow="Modulo 6" title="Logros y rachas" description="Selecciona un estudiante." />;
-  }
+  useEffect(() => {
+    if (!studentId) {
+      setSummary(null);
+      return undefined;
+    }
+    let active = true;
+    setSummary(null);
+    setError('');
+    api(`/achievements/${encodeURIComponent(studentId)}`)
+      .then((data) => {
+        if (active) {
+          setSummary(data);
+          setError('');
+        }
+      })
+      .catch((loadError) => {
+        if (active) {
+          console.error('Unable to load achievements:', loadError);
+          setSummary(null);
+          setError(loadError.message || 'No se pudieron cargar los logros.');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [studentId]);
 
-  if (!summary) return <p className="text-neutral-600">Cargando logros...</p>;
+  if (error) return <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-rose-800">{error}</p>;
+  if (!students.length) return <ModuleHeader eyebrow="Modulo 6" title="Logros y rachas" description="No hay estudiantes disponibles en tu ámbito autorizado." />;
+  if (!studentId) return <StudentSelector students={students} value={studentId} onChange={setStudentId} />;
+  if (!summary) return <p className="text-neutral-600">Cargando logros…</p>;
 
   const earnedIds = new Set(summary.earnedAchievements.map((item) => item.achievementId));
   const streak = summary.streaks[0];
@@ -24,6 +59,7 @@ export default function Achievements({ selectedStudent }) {
   return (
     <>
       <ModuleHeader eyebrow="Modulo 6" title="Logros y rachas" description="Reconocimientos y continuidad calculados automaticamente." />
+      {!isStudent && <div className="mb-5 max-w-sm"><StudentSelector students={students} value={studentId} onChange={setStudentId} /></div>}
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <Panel title="Logros">
           <div className="grid gap-3">

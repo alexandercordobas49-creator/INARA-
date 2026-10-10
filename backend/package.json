@@ -7,6 +7,7 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "setup:test-db": "node scripts/setup_test_db.js",
+    "migrate:json": "node scripts/migrate_json_data.js",
     "test": "vitest"
   },
   "dependencies": {

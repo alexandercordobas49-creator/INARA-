@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, notify } from '../api.js';
 import ModuleHeader from '../components/ModuleHeader.jsx';
 import Panel from '../components/Panel.jsx';
+import StudentSelector from '../components/StudentSelector.jsx';
 
-export default function Attendance({ users, courses, reload }) {
+export default function Attendance({ users, courses, session, reload }) {
   const [records, setRecords] = useState([]);
   const [form, setForm] = useState({
     userId: '',
@@ -13,30 +14,38 @@ export default function Attendance({ users, courses, reload }) {
     notes: ''
   });
   const students = users.filter((user) => user.role === 'student');
-  const valeriaUser = students.find((student) => student.firstName?.toLowerCase() === 'valeria');
+  const canManage = ['admin', 'instructor'].includes(session?.user?.role);
   const [loading, setLoading] = useState(false);
+  const recordsRequest = useRef(0);
 
   useEffect(() => {
-    if (valeriaUser) {
-      setForm((value) => ({ ...value, userId: valeriaUser.id }));
-    } else if (!form.userId && students[0]) {
-      setForm((value) => ({ ...value, userId: students[0].id }));
-    }
-
-    if (!form.courseId && courses[0]) {
-      setForm((value) => ({ ...value, courseId: courses[0].id }));
-    }
-  }, [students, courses, valeriaUser, form.userId, form.courseId]);
+    const allowedStudentIds = new Set(students.map((student) => student.id));
+    setForm((value) => ({
+      ...value,
+      userId: allowedStudentIds.has(value.userId) ? value.userId : (students[0]?.id || ''),
+      courseId: courses.some((course) => course.id === value.courseId) ? value.courseId : (courses[0]?.id || '')
+    }));
+  }, [users, courses]);
 
   useEffect(() => {
-    loadRecords();
-  }, [valeriaUser]);
+    loadRecords(form.userId);
+    return () => {
+      recordsRequest.current += 1;
+    };
+  }, [form.userId]);
 
-  async function loadRecords() {
+  async function loadRecords(userId = form.userId) {
+    const requestId = ++recordsRequest.current;
+    setRecords([]);
+    if (!userId && session?.user?.role !== 'admin') {
+      return;
+    }
     try {
-      const endpoint = valeriaUser ? `/attendance?userId=${encodeURIComponent(valeriaUser.id)}` : '/attendance';
-      setRecords(await api(endpoint));
+      const endpoint = userId ? `/attendance?userId=${encodeURIComponent(userId)}` : '/attendance';
+      const result = await api(endpoint);
+      if (requestId === recordsRequest.current) setRecords(result);
     } catch (error) {
+      if (requestId !== recordsRequest.current) return;
       console.error(error);
       notify('error', error.message || 'Error cargando registros');
     }
@@ -67,37 +76,11 @@ export default function Attendance({ users, courses, reload }) {
     }
   }
 
-  const fallbackAttendanceDetails = [
-    {
-      id: 'fallback-1',
-      course_name: 'Ingles Conversacional',
-      session_date: '2026-06-20',
-      status: 'present',
-      notes: 'Asistió a tiempo'
-    },
-    {
-      id: 'fallback-2',
-      course_name: 'Tecnologias Digitales',
-      session_date: '2026-06-21',
-      status: 'late',
-      notes: 'Llegó tarde pero asistió'
-    }
-  ];
-
-  const displayRecords = useMemo(() => {
-    if (valeriaUser) {
-      return records;
-    }
-
-    return records.filter((record) => {
-      const firstName = (record.user?.firstName || record.first_name || '').toString().trim().toLowerCase();
-      return firstName === 'valeria';
-    });
-  }, [records, valeriaUser]);
-
-  const recordsToShow = displayRecords.length > 0 ? displayRecords : fallbackAttendanceDetails;
-  const usingFallback = displayRecords.length === 0;
-  const studentName = valeriaUser ? `${valeriaUser.firstName} ${valeriaUser.lastName}` : 'Valeria';
+  const recordsToShow = records;
+  const selectedStudent = students.find((student) => student.id === form.userId);
+  const studentName = selectedStudent
+    ? `${selectedStudent.firstName} ${selectedStudent.lastName}`
+    : 'Estudiante';
   const attendanceLabel = `${recordsToShow.length} asistencia${recordsToShow.length === 1 ? '' : 's'}`;
 
   const statusCounts = useMemo(() => {
@@ -106,12 +89,6 @@ export default function Attendance({ users, courses, reload }) {
       return acc;
     }, { present: 0, late: 0, absent: 0, excused: 0 });
   }, [recordsToShow]);
-
-  function formatStudent(record) {
-    return (record.user?.firstName && record.user?.lastName)
-      ? `${record.user.firstName} ${record.user.lastName}`
-      : `${record.first_name || ''} ${record.last_name || ''}`.trim();
-  }
 
   function formatCourse(record) {
     return record.course?.name || record.course_name || '';
@@ -150,13 +127,13 @@ export default function Attendance({ users, courses, reload }) {
 
   return (
     <>
-      <ModuleHeader eyebrow="Modulo 3" title="Sistema de asistencia" description="Registra asistencia. Presente y tarde suman XP y actualizan rachas." />
-      <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
-        <Panel title="Agregar asistencia">
+      <ModuleHeader eyebrow="Modulo 3" title="Sistema de asistencia" description="Consulta los registros permitidos y registra asistencia según tu rol." />
+      <div className={`grid gap-5 ${canManage ? 'lg:grid-cols-[380px_1fr]' : ''}`}>
+        {canManage && <Panel title="Agregar asistencia">
           <div className="space-y-5">
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">
               <p className="font-semibold text-slate-900">Consejo rápido</p>
-              <p>Los registros de <span className="font-semibold">Presente</span> y <span className="font-semibold">Tarde</span> suman XP y fortalecen la racha de Valeria.</p>
+              <p>Los registros de <span className="font-semibold">Presente</span> y <span className="font-semibold">Tarde</span> suman XP una sola vez por sesión.</p>
             </div>
             <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
               <div>
@@ -213,8 +190,15 @@ export default function Attendance({ users, courses, reload }) {
               </div>
             </form>
           </div>
-        </Panel>
+        </Panel>}
         <section className="space-y-5">
+          {!canManage && students.length > 1 && (
+            <StudentSelector
+              students={students}
+              value={form.userId}
+              onChange={(userId) => setForm((value) => ({ ...value, userId }))}
+            />
+          )}
           <div className="rounded-[32px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6 shadow-[0_24px_80px_-38px_rgba(15,23,42,0.18)]">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-gradient-to-r from-slate-100 via-white to-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 shadow-sm">
               <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
@@ -228,7 +212,7 @@ export default function Attendance({ users, courses, reload }) {
               <div className="rounded-3xl bg-white px-5 py-4 shadow-sm border border-slate-200">
                 <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Asistencias</p>
                 <p className="mt-3 text-3xl font-extrabold text-slate-950">{attendanceLabel}</p>
-                <p className="mt-1 text-sm text-slate-500">{usingFallback ? 'Ejemplo de contenido mientras se cargan los datos reales.' : 'Datos basados en registros registrados.'}</p>
+                <p className="mt-1 text-sm text-slate-500">Datos obtenidos de los registros autorizados.</p>
               </div>
             </div>
           </div>
@@ -256,7 +240,6 @@ export default function Attendance({ users, courses, reload }) {
                 <p className="text-sm text-slate-500">Últimos registros guardados en el sistema.</p>
                 <p className="mt-1 text-xs text-slate-400">Haz clic para recuperar los datos más recientes.</p>
                 <p className="mt-3 text-sm font-semibold text-slate-700">{studentName} tiene {attendanceLabel}.</p>
-                {usingFallback && <p className="mt-2 text-sm text-slate-500">Mostrando un ejemplo con contenido listo para la interfaz.</p>}
               </div>
               <button type="button" className="group relative inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50" onClick={loadRecords}>
                 <span className="mr-2 inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
@@ -290,12 +273,7 @@ export default function Attendance({ users, courses, reload }) {
                 </tbody>
               </table>
             </div>
-            {usingFallback && (
-              <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500 shadow-sm">
-                <p className="font-semibold text-slate-900">Detalles de muestra</p>
-                <p className="mt-2">Mostrando 2 asistencias de ejemplo mientras esperamos los datos reales de la plataforma.</p>
-              </div>
-            )}
+            {!recordsToShow.length && <p className="mt-4 text-center text-sm text-slate-500">Aún no hay registros de asistencia para este estudiante.</p>}
           </Panel>
         </section>
       </div>

@@ -1,15 +1,5 @@
-﻿import React, { useEffect, useState } from "react";
-import "./AtlasDashboard.css";
-import Panel from "../components/Panel.jsx";
-import StatCard from "../components/StatCard.jsx";
-
-const inspiringQuotes = [
-  "Hoy es un buen día para aprender algo nuevo.",
-  "Cada pequeño avance te acerca a tu meta.",
-  "El aprendizaje es un camino de crecimiento.",
-  "Tu esfuerzo de hoy construye tu futuro.",
-  "La excelencia nace de la constancia.",
-];
+import Panel from '../components/Panel.jsx';
+import StudentSelector from '../components/StudentSelector.jsx';
 
 export default function AtlasDashboard({
   question,
@@ -17,192 +7,62 @@ export default function AtlasDashboard({
   result,
   loading,
   ask,
+  students,
+  studentId,
+  onStudentChange,
+  isStudent,
+  error
 }) {
-  const [dailyQuote, setDailyQuote] = useState("");
-  const [messages, setMessages] = useState([
-    { id: 1, author: "Atlas", role: "assistant", text: "Hola — soy Atlas, tu Centro Inteligente de Aprendizaje. ¿En qué puedo ayudarte hoy?" },
-  ]);
-
-  useEffect(() => {
-    const today = new Date().getDate();
-    setDailyQuote(
-      inspiringQuotes[today % inspiringQuotes.length]
-    );
-  }, []);
-
-  useEffect(() => {
-    if (result) {
-      setMessages((m) => [
-        ...m,
-        { id: Date.now(), author: "Atlas", role: "assistant", text: String(result) },
-      ]);
-    }
-  }, [result]);
-
-  const metrics = [
-    {
-      label: "XP",
-      value: "2,450",
-      icon: "⭐",
-    },
-    {
-      label: "Nivel",
-      value: "8",
-      icon: "🏆",
-    },
-    {
-      label: "Racha",
-      value: "12 días",
-      icon: "🔥",
-    },
-    {
-      label: "Cursos",
-      value: "5",
-      icon: "📚",
-    },
-  ];
-
   return (
-    <div className="atlas-dashboard">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <header>
+        <p className="text-sm font-semibold uppercase tracking-wider text-emerald-700">Atlas</p>
+        <h1 className="mt-2 text-3xl font-extrabold text-slate-900">Resumen de progreso</h1>
+        <p className="mt-2 text-slate-600">
+          Consulta el resumen del estudiante basado únicamente en los datos registrados en INARA.
+        </p>
+      </header>
 
-      <div className="atlas-page-header">
-        <div>
-          <p className="atlas-eyebrow">ATLAS IA</p>
-          <h1 className="atlas-title-main">Tablero de recomendaciones inteligentes</h1>
-          <p className="atlas-subtext">Atlas analiza tu ritmo y te propone las prioridades de estudio del día para avanzar con confianza.</p>
-        </div>
-      </div>
-
-      <div className="atlas-top-grid">
-        <Panel className="atlas-hero-card">
-          <div className="atlas-hero-card-top">
-            <div className="atlas-avatar-card">
-              <div className="avatar-icon-large">🤖</div>
-            </div>
-
-            <div className="atlas-hero-copy">
-              <div className="atlas-hero-pill">Plan recomendado</div>
-              <p className="atlas-hero-label">Atlas</p>
-              <h2 className="atlas-hero-title">Tu compañero inteligente de aprendizaje</h2>
-              <p className="atlas-hero-description">¡Hola! Revisé tu progreso de ayer y creo que hoy sería perfecto repasar Álgebra Lineal. Estás muy cerca de completarlo.</p>
-
-              <div className="atlas-hero-badges">
-                <span>20 min</span>
-                <span>Racha +12</span>
-                <span>Nivel 8</span>
-              </div>
-
-              <p className="atlas-hero-quote">"{dailyQuote}"</p>
-            </div>
-
-            <span className="atlas-badge">En línea</span>
+      <Panel title="Consultar resumen">
+        {!isStudent && (
+          <div className="mb-4">
+            <StudentSelector students={students} value={studentId} onChange={onStudentChange} />
           </div>
+        )}
+        <label className="block text-sm font-semibold text-slate-700" htmlFor="atlas-question">
+          Pregunta
+        </label>
+        <textarea
+          id="atlas-question"
+          className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 px-4 py-3"
+          maxLength={1000}
+          placeholder="Escribe una pregunta sobre el progreso registrado…"
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+        />
+        <button
+          className="mt-4 rounded-xl bg-emerald-700 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={ask}
+          disabled={loading || !question.trim() || !studentId}
+        >
+          {loading ? 'Consultando…' : 'Consultar'}
+        </button>
+        {!studentId && <p className="mt-3 text-sm text-slate-600">Selecciona un estudiante autorizado para consultar sus datos.</p>}
+        {error && <p role="alert" className="mt-4 text-sm text-rose-700">{error}</p>}
+      </Panel>
 
-          <div className="atlas-chat-hero">
-            <div className="atlas-chat-card">
-              <div className="atlas-chat-card-header">
-                <div className="atlas-chat-card-avatar">🤖</div>
-                <div>
-                  <p className="atlas-chat-card-title">Atlas</p>
-                  <p className="atlas-chat-card-subtitle">Tus recomendaciones personalizadas</p>
-                </div>
-              </div>
-
-              <div className="atlas-chat-feed">
-                {messages.map((message) => (
-                  <div key={message.id} className={`atlas-message ${message.role === 'assistant' ? 'assistant' : 'user'}`}>
-                    <div className="atlas-message-bubble">
-                      <p>{message.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="atlas-action-buttons">
-              <button className="atlas-action-pill atlas-action-primary">Continuar donde dejé</button>
-              <button className="atlas-action-pill">Quiz rápido</button>
-              <button className="atlas-action-pill">Explorar cursos</button>
-            </div>
-          </div>
-
-          <div className="atlas-input-row">
-            <input
-              className="atlas-input"
-              type="text"
-              placeholder="Pregúntale a Atlas algo..."
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-            />
-            <button
-              className="atlas-input-button"
-              onClick={() => {
-                if (!question.trim()) return;
-                setMessages((m) => [...m, { id: Date.now(), author: 'Tú', role: 'user', text: question }]);
-                ask();
-                setQuestion('');
-              }}
-              disabled={loading}
-            >
-              ➤
-            </button>
-          </div>
+      {result && (
+        <Panel title="Resumen disponible">
+          <p className="text-slate-800">{result.answer}</p>
+          <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div><dt className="text-sm text-slate-500">XP</dt><dd className="font-bold">{result.metrics.totalXp ?? 'No disponible'}</dd></div>
+            <div><dt className="text-sm text-slate-500">Nivel</dt><dd className="font-bold">{result.metrics.currentLevel ?? 'No disponible'}</dd></div>
+            <div><dt className="text-sm text-slate-500">Racha</dt><dd className="font-bold">{result.metrics.currentStreak} días</dd></div>
+            <div><dt className="text-sm text-slate-500">Asistencia</dt><dd className="font-bold">{result.metrics.attendanceRate === null ? 'Sin registros' : `${result.metrics.attendanceRate}%`}</dd></div>
+          </dl>
+          <p className="mt-5 text-sm text-slate-500">{result.note}</p>
         </Panel>
-
-        <Panel className="atlas-suggestions-panel">
-          <div className="atlas-suggestions-header">
-            <div>
-              <p className="small-label">Atlas te sugiere hoy</p>
-              <h3>Basado en tu ritmo de aprendizaje</h3>
-            </div>
-            <button className="atlas-link-button">Ver todas →</button>
-          </div>
-
-          <div className="atlas-suggestion-card highlight-card">
-            <div>
-              <p className="suggestion-label">Repasar Álgebra Lineal</p>
-              <p className="suggestion-subtitle">20 min · Prioritario</p>
-            </div>
-            <div className="progress-pill">
-              <span>45%</span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: '45%' }} />
-            </div>
-            <button className="atlas-suggestion-cta">¡Empecemos! →</button>
-          </div>
-
-          <div className="atlas-suggestion-card">
-            <div className="suggestion-chip">Física</div>
-            <p className="suggestion-title">Cinemática</p>
-            <p className="suggestion-meta">Práctica de 15 min</p>
-          </div>
-
-          <div className="atlas-suggestion-card">
-            <div className="suggestion-chip suggestion-chip-alt">Programación</div>
-            <p className="suggestion-title">Desafío de Programación</p>
-            <p className="suggestion-meta">Desafío de 10 min</p>
-          </div>
-
-          <div className="atlas-advice-card">
-            <div className="atlas-advice-header">
-              <span className="atlas-advice-icon">💡</span>
-              <div>
-                <p className="small-label">CONSEJO DE ATLAS</p>
-                <p className="atlas-advice-title">Multiplica tu racha</p>
-              </div>
-            </div>
-            <p>Completar Álgebra Lineal ahora te da un multiplicador de racha de <strong>1.5x</strong> por el resto de la tarde. ¡Aprovéchalo!</p>
-          </div>
-        </Panel>
-      </div>
-
-      <div className="atlas-stats-grid">
-        {metrics.map((m, i) => (
-          <StatCard key={i} label={m.label} value={m.value} detail={m.icon} />
-        ))}
-      </div>
-
+      )}
     </div>
   );
 }

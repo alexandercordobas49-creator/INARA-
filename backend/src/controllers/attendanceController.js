@@ -1,20 +1,20 @@
 import { attendanceStatuses } from '../models/Attendance.js';
 import AttendanceRepository from '../repositories/AttendanceRepository.js';
 import { pool } from '../config/database.js';
-import { isParentOf, readData } from '../data/store.js';
+import FamilyRepository from '../repositories/FamilyRepository.js';
 
 async function canAccessStudentAttendance(actor, targetUserId) {
+  const normalizedTargetUserId = targetUserId.toLowerCase();
   if (actor.role === 'admin') {
     return true;
   }
 
   if (actor.role === 'student') {
-    return actor.id === targetUserId;
+    return actor.id.toLowerCase() === normalizedTargetUserId;
   }
 
   if (actor.role === 'parent') {
-    const data = readData();
-    return isParentOf(data, actor.id, targetUserId);
+    return FamilyRepository.isParentOf(actor.id, normalizedTargetUserId);
   }
 
   if (actor.role === 'instructor') {
@@ -28,7 +28,7 @@ async function canAccessStudentAttendance(actor, targetUserId) {
           AND c.instructor_id = $2
         LIMIT 1
       `,
-      [targetUserId, actor.id]
+      [normalizedTargetUserId, actor.id]
     );
 
     return courseCheck.rows.length > 0;
@@ -67,9 +67,7 @@ export async function listAttendance(req, res) {
 
 
 export async function saveAttendance(req, res) {
-
   try {
-
     const {
       userId,
       courseId,
@@ -80,20 +78,21 @@ export async function saveAttendance(req, res) {
 
 
     if (!userId || !courseId || !sessionDate || !status) {
-
       return res.status(400).json({
         message: 'Completa estudiante, curso, fecha y estado'
       });
-
     }
 
-
     if (!attendanceStatuses.includes(status)) {
-
       return res.status(400).json({
         message: 'Estado de asistencia invalido'
       });
+    }
 
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (typeof userId !== 'string' || typeof courseId !== 'string' ||
+        !uuidPattern.test(userId) || !uuidPattern.test(courseId)) {
+      return res.status(400).json({ message: 'Identificador de estudiante o curso inválido' });
     }
 
     const parsedSessionDate = typeof sessionDate === 'string'
@@ -113,8 +112,10 @@ export async function saveAttendance(req, res) {
     }
 
     const client = await pool.connect();
+    let transactionOpen = false;
     try {
       await client.query('BEGIN');
+      transactionOpen = true;
 
       const enrollmentCheck = await client.query(
         `
@@ -136,6 +137,7 @@ export async function saveAttendance(req, res) {
 
       if (!enrollmentCheck.rows.length) {
         await client.query('ROLLBACK');
+        transactionOpen = false;
         return res.status(403).json({ message: 'No autorizado: estudiante o curso no asignado' });
       }
 
@@ -202,22 +204,22 @@ export async function saveAttendance(req, res) {
       }
 
       await client.query('COMMIT');
+      transactionOpen = false;
       return res.status(201).json(record);
     } catch (error) {
-      await client.query('ROLLBACK');
+      if (transactionOpen) {
+        try {
+          await client.query('ROLLBACK');
+        } catch (rollbackError) {
+          console.error('Unable to rollback attendance transaction:', rollbackError.message);
+        }
+      }
       throw error;
     } finally {
       client.release();
     }
-
-
-  } catch(error) {
+  } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      message:'Error guardando asistencia'
-    });
-
-
+    return res.status(500).json({ message: 'Error guardando asistencia' });
   }
-
 }

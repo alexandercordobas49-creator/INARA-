@@ -24,11 +24,6 @@ vi.mock('../src/repositories/AttendanceRepository.js', () => ({
   }
 }));
 
-vi.mock('../src/data/store.js', () => ({
-  readData: () => ({ parentRelations: [] }),
-  isParentOf: () => false
-}));
-
 import { saveAttendance } from '../src/controllers/attendanceController.js';
 
 function createResponse() {
@@ -48,10 +43,10 @@ function createResponse() {
 
 function makeRequest(role = 'instructor') {
   return {
-    user: { id: 'instructor-1', role },
+    user: { id: '00000000-0000-4000-8000-000000000002', role },
     body: {
-      userId: 'student-1',
-      courseId: 'course-1',
+      userId: '00000000-0000-4000-8000-000000000001',
+      courseId: '00000000-0000-4000-8000-000000000003',
       sessionDate: '2026-10-10',
       status: 'present',
       notes: ''
@@ -86,6 +81,17 @@ describe('attendance security and XP integrity', () => {
     expect(clientQuery).toHaveBeenCalledWith('ROLLBACK');
     expect(clientQuery.mock.calls.some(([sql]) => String(sql).includes('INSERT INTO xp_events'))).toBe(false);
     expect(mocks.release).toHaveBeenCalledOnce();
+  });
+
+  it('rejects malformed UUIDs before acquiring a database connection', async () => {
+    const req = makeRequest();
+    req.body.userId = 'not-a-uuid';
+    const res = createResponse();
+
+    await saveAttendance(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(mocks.connect).not.toHaveBeenCalled();
   });
 
   it('does not award XP again when an attendance record was already rewarded', async () => {

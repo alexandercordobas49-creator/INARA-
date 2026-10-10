@@ -36,6 +36,7 @@ export async function api(path, options = {}) {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('INARA-session');
+        window.dispatchEvent(new Event('inara-session-expired'));
       }
 
       const messages = {

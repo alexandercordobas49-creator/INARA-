@@ -25,5 +25,6 @@ describe('AttendanceRepository instructor scope', () => {
       expect.stringContaining('c.instructor_id = $2'),
       ['student-1', 'instructor-1']
     );
+    expect(mocks.query.mock.calls[0][0]).toMatch(/cs\.status = 'active'/);
   });
 });
