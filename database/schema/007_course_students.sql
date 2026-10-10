@@ -13,14 +13,18 @@
 --   y análisis de Atlas.
 -- ==========================================
 -- Estados posibles de una matrícula
-CREATE TYPE enrollment_status AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE enrollment_status AS ENUM (
     'active',
     'completed',
     'withdrawn',
     'suspended'
-);
+    );
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 -- Relación entre estudiantes y cursos
-CREATE TABLE course_students (
+CREATE TABLE IF NOT EXISTS course_students (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     course_id UUID NOT NULL
@@ -39,8 +43,8 @@ CREATE TABLE course_students (
 );
 -- Índices para consultas rápidas
 
-CREATE INDEX idx_course_students_course
+CREATE INDEX IF NOT EXISTS idx_course_students_course
 ON course_students(course_id);
 
-CREATE INDEX idx_course_students_student
+CREATE INDEX IF NOT EXISTS idx_course_students_student
 ON course_students(student_id);

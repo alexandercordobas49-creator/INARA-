@@ -1,4 +1,15 @@
-import { readData, writeData, createId } from '../data/store.js';
+import { readData, writeData, createId, isParentOf } from '../data/store.js';
+
+function canAccessUser(actor, targetUserId) {
+  if (!actor) return false;
+  if (actor.role === 'admin') return true;
+  if (actor.role === 'student') return actor.id === targetUserId;
+  if (actor.role === 'parent') {
+    const data = readData();
+    return isParentOf(data, actor.id, targetUserId);
+  }
+  return false;
+}
 
 export function listRoutes(req, res) {
   const data = readData();
@@ -18,11 +29,7 @@ export function getUserProgress(req, res) {
   const student = data.users.find((item) => item.id === userId);
   if (!student) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-  if (req.user.role === 'student' && req.user.id !== userId) {
-    return res.status(403).json({ message: 'No autorizado' });
-  }
-
-  if (req.user.role === 'parent' && !isParentOf(data, req.user.id, userId)) {
+  if (!canAccessUser(req.user, userId)) {
     return res.status(403).json({ message: 'No autorizado' });
   }
 
@@ -33,13 +40,10 @@ export function getUserProgress(req, res) {
 export function completeMission(req, res) {
   const data = readData();
   const { userId, routeId, missionId, evidence } = req.body;
-  if (req.user.role === 'student' && req.user.id !== userId) {
+  if (!canAccessUser(req.user, userId)) {
     return res.status(403).json({ message: 'No autorizado' });
   }
 
-  if (req.user.role === 'parent' && !isParentOf(data, req.user.id, userId)) {
-    return res.status(403).json({ message: 'No autorizado' });
-  }
   const route = (data.competencyRoutes || []).find((item) => item.id === routeId);
   if (!route) return res.status(404).json({ message: 'Ruta no encontrada' });
 
@@ -85,6 +89,11 @@ export function completeMission(req, res) {
 
 export function getRouteProgress(req, res) {
   const data = readData();
-  const progress = (data.userCompetencyProgress || []).find((item) => item.userId === req.params.userId && item.routeId === req.params.routeId);
+  const userId = req.params.userId;
+  if (!canAccessUser(req.user, userId)) {
+    return res.status(403).json({ message: 'No autorizado' });
+  }
+
+  const progress = (data.userCompetencyProgress || []).find((item) => item.userId === userId && item.routeId === req.params.routeId);
   return res.json({ progress });
 }

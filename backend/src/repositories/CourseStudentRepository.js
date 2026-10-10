@@ -12,10 +12,10 @@ const CourseStudentRepository = {
                 id,
                 course_id,
                 student_id,
-                enrollment_status,
-                created_at
+                status,
+                enrolled_at
             FROM course_students
-            ORDER BY created_at DESC
+            ORDER BY enrolled_at DESC
             `
         );
 
@@ -32,8 +32,8 @@ const CourseStudentRepository = {
                 id,
                 course_id,
                 student_id,
-                enrollment_status,
-                created_at
+                status,
+                enrolled_at
             FROM course_students
             WHERE course_id = $1
             `,
@@ -53,8 +53,8 @@ const CourseStudentRepository = {
                 id,
                 course_id,
                 student_id,
-                enrollment_status,
-                created_at
+                status,
+                enrolled_at
             FROM course_students
             WHERE student_id = $1
             `,
@@ -71,7 +71,7 @@ const CourseStudentRepository = {
         const {
             course_id,
             student_id,
-            enrollment_status = "active"
+            status = "active"
         } = data;
 
 
@@ -81,7 +81,7 @@ const CourseStudentRepository = {
             (
                 course_id,
                 student_id,
-                enrollment_status
+                status
             )
             VALUES ($1,$2,$3)
             RETURNING *
@@ -89,7 +89,7 @@ const CourseStudentRepository = {
             [
                 course_id,
                 student_id,
-                enrollment_status
+                status
             ]
         );
 

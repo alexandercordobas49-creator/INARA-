@@ -112,7 +112,13 @@ export async function runAlerts(req, res) {
 
 export function listNotifications(req, res) {
   const data = readData();
-  const userId = req.query.userId;
+  const requestedUserId = req.query.userId ? String(req.query.userId) : null;
+
+  if (req.user.role !== 'admin' && requestedUserId && requestedUserId !== req.user.id) {
+    return res.status(403).json({ message: 'No autorizado' });
+  }
+
+  const userId = req.user.role === 'admin' ? requestedUserId : req.user.id;
   let list = data.notifications || [];
   if (userId) list = list.filter((n) => n.toUserId === userId);
   return res.json({ notifications: list.slice().reverse() });

@@ -19,7 +19,7 @@ const router = Router();
 router.get(
     "/",
     authenticateToken,
-    authorizeRoles("admin", "instructor"),
+    authorizeRoles("admin"),
     listCourseStudents
 );
 

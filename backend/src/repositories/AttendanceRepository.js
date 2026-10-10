@@ -48,6 +48,24 @@ const AttendanceRepository = {
         return result.rows;
     },
 
+    async findByStudentAndInstructor(userId, instructorId) {
+        const result = await pool.query(
+            `
+            SELECT
+                ar.*,
+                c.name AS course_name
+            FROM attendance_records ar
+            JOIN courses c ON c.id = ar.course_id
+            WHERE ar.user_id = $1
+              AND c.instructor_id = $2
+            ORDER BY ar.session_date DESC
+            `,
+            [userId, instructorId]
+        );
+
+        return result.rows;
+    },
+
 
     async findOne(userId, courseId, sessionDate) {
 

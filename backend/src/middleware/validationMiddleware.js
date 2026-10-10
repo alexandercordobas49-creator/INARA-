@@ -1,14 +1,23 @@
 export function validateBody(requiredFields = []) {
   return (req, res, next) => {
     const missing = [];
-    for (const f of requiredFields) {
-      if (!Object.prototype.hasOwnProperty.call(req.body, f) || req.body[f] === undefined || req.body[f] === null || req.body[f] === '') {
-        missing.push(f);
+
+    for (const field of requiredFields) {
+      if (!Object.prototype.hasOwnProperty.call(req.body, field)) {
+        missing.push(field);
+        continue;
+      }
+
+      const value = req.body[field];
+      if (value === undefined || value === null || value === '' || (typeof value === 'string' && value.trim() === '')) {
+        missing.push(field);
       }
     }
+
     if (missing.length) {
       return res.status(400).json({ message: `Faltan campos: ${missing.join(', ')}` });
     }
-    next();
+
+    return next();
   };
 }
