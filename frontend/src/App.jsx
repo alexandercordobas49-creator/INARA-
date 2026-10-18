@@ -5,6 +5,7 @@ import AppShell from './components/AppShell.jsx';
 import Achievements from './pages/Achievements.jsx';
 import Atlas from './pages/Atlas.jsx';
 import Auth from './pages/Auth.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Progress from './pages/Progress.jsx';
 import Courses from './pages/Courses.jsx';
@@ -71,6 +72,7 @@ export default function App() {
       <AppShell session={session} onLogout={logout}>
         <Routes>
           <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <Auth onSession={saveSession} />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard {...pageProps} />} />
           <Route path="/progress" element={<Progress {...pageProps} />} />
           <Route path="/courses" element={<Courses {...pageProps} />} />
