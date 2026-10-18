@@ -56,4 +56,11 @@ app.use('/api/competency', competencyRoutes);
 app.use('/api/risk', riskRoutes);
 
 
+// Última barrera para errores síncronos y errores enviados mediante next(error).
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  console.error("Error no controlado en la API:", error.message);
+  return res.status(500).json({ message: "Error interno del servidor" });
+});
+
 export default app;
