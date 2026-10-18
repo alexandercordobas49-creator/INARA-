@@ -22,7 +22,7 @@ npm run dev
 
 - Frontend: http://localhost:5173
 - API: http://localhost:3000
-- Comprobación de API y base: http://localhost:3000/api/health
+- Comprobación de API: http://localhost:3000/api/health\n- Comprobación de PostgreSQL: http://localhost:3000/api/health/db
 
 No se incluyen cuentas demo precreadas en la configuración PostgreSQL. Registra una cuenta desde la interfaz; el registro público crea una cuenta de estudiante. Los roles de docente, tutor y administrador deben asignarse de forma administrativa.
 
