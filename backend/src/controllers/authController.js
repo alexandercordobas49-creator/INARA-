@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { roles } from '../models/User.js';
 import { createUser, findUserByEmail, updatePasswordByEmail } from '../repositories/UserRepository.js';
 import { signToken } from '../middleware/authMiddleware.js';
 
@@ -9,7 +8,8 @@ const SALT_ROUNDS = 10;
 
 export async function login(req, res) {
 
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
 
 
   const user = await findUserByEmail(email);
@@ -45,13 +45,15 @@ export async function register(req, res) {
     firstName,
     lastName,
     email,
-    password,
-    role = 'student'
+    password
   } = req.body;
 
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const role = 'student';
 
 
-  if (!firstName || !lastName || !email || !password) {
+
+  if (!firstName?.trim() || !lastName?.trim() || !normalizedEmail || !password) {
 
     return res.status(400).json({
       message: 'Completa nombre, apellido, correo y contrasena'
@@ -61,25 +63,13 @@ export async function register(req, res) {
 
 
 
-  if (!roles.includes(role)) {
 
-    return res.status(400).json({
-      message: 'Rol invalido'
-    });
 
+  if (password.length < 8) {
+    return res.status(400).json({ message: 'La contraseña debe tener al menos 8 caracteres' });
   }
 
-  if (role === 'admin') {
-
-    return res.status(403).json({
-      message: 'El rol de administrador no puede crearse desde el registro publico'
-    });
-
-  }
-
-
-
-  const exists = await findUserByEmail(email);
+  const exists = await findUserByEmail(normalizedEmail);
 
 
   if (exists) {
@@ -103,7 +93,7 @@ export async function register(req, res) {
 
     first_name: firstName,
     last_name: lastName,
-    email,
+    email: normalizedEmail,
     password_hash: hashedPassword,
     role
 
