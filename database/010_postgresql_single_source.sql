@@ -87,3 +87,14 @@ SELECT 'Tecnologías de la Información',
        '💻',
        '[{"id":"mission-4","title":"Instalación de red local","description":"Configura una red local y documenta la topología.","xp":130,"category":"Redes","evidenceType":"document"},{"id":"mission-5","title":"Seguridad informática básica","description":"Aplica medidas de seguridad en un equipo y registra los resultados.","xp":140,"category":"Seguridad","evidenceType":"document"},{"id":"mission-6","title":"Soporte técnico","description":"Resuelve un problema técnico y documenta el proceso.","xp":110,"category":"Soporte","evidenceType":"document"}]'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM competency_routes WHERE name = 'Tecnologías de la Información');
+
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens(user_id);
