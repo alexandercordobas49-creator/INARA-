@@ -16,6 +16,7 @@ export default function Auth({ onSession }) {
   const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [developmentResetLink, setDevelopmentResetLink] = useState('');
 
   function validateEmail(email) {
     return /\S+@\S+\.\S+/.test(email);
@@ -85,7 +86,7 @@ export default function Auth({ onSession }) {
         body: JSON.stringify({ email })
       });
       setMessage(result.message || 'Si el correo existe, recibirás instrucciones para restablecer la contraseña.');
-      if (result.token) setMessage(`${result.message} Token de desarrollo: ${result.token}`);
+      setDevelopmentResetLink(result.token ? `/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(result.token)}` : '');
     } catch (error) {
       setMessage(error.message || 'No se pudo solicitar la recuperación.');
     } finally {
@@ -227,6 +228,7 @@ export default function Auth({ onSession }) {
                 <span className={`auth-button__icon ${loginLoading ? 'auth-button__icon--loading' : ''}`} aria-hidden="true">{loginLoading ? '◌' : '🚀'}</span> {loginLoading ? 'Entrando...' : 'Entrar a INARA'}
               </button>
               <p className="auth-recovery text-center text-xs"><button type="button" onClick={requestPasswordReset} disabled={resetLoading} className="font-bold transition underline">{resetLoading ? "Solicitando recuperación..." : "¿Olvidaste tu contraseña? Recupérala aquí"}</button></p>
+              {developmentResetLink && <p className="text-center text-xs"><a className="underline font-bold" href={developmentResetLink}>Abrir enlace de prueba de recuperación</a></p>}
               <p className="auth-muted text-center text-xs">¿No tienes una cuenta? <a href="#" className="font-bold transition">Créala en la siguiente sección</a></p>
             </div>
           </div>
