@@ -2,20 +2,20 @@ import { useState, useMemo } from 'react';
 import { api, notify } from '../api.js';
 
 export default function Auth({ onSession }) {
-  const [loginForm, setLoginForm] = useState({ email: 'valeria@INARA.test', password: 'demo123' });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    role: 'student'
+    confirmPassword: ''
   });
   const [loginShowPassword, setLoginShowPassword] = useState(false);
   const [registerShowPassword, setRegisterShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   function validateEmail(email) {
     return /\S+@\S+\.\S+/.test(email);
@@ -71,6 +71,28 @@ export default function Auth({ onSession }) {
     }
   }
 
+  async function requestPasswordReset() {
+    if (resetLoading) return;
+    const email = loginForm.email.trim();
+    if (!validateEmail(email)) {
+      setMessage('Escribe primero tu correo electrónico para recuperar la contraseña.');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const result = await api('/auth/forgot', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+      setMessage(result.message || 'Si el correo existe, recibirás instrucciones para restablecer la contraseña.');
+      if (result.token) setMessage(`${result.message} Token de desarrollo: ${result.token}`);
+    } catch (error) {
+      setMessage(error.message || 'No se pudo solicitar la recuperación.');
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   async function register() {
     if (registerLoading) return;
 
@@ -84,7 +106,12 @@ export default function Auth({ onSession }) {
       setRegisterLoading(true);
       const session = await api('/auth/register', {
         method: 'POST',
-        body: JSON.stringify(registerForm)
+        body: JSON.stringify({
+          firstName: registerForm.firstName,
+          lastName: registerForm.lastName,
+          email: registerForm.email,
+          password: registerForm.password
+        })
       });
 
       setMessage('Cuenta creada.');
@@ -199,7 +226,7 @@ export default function Auth({ onSession }) {
               <button className={`auth-button w-full rounded-xl px-6 py-4 font-bold text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-lg ${loginValid && !loginLoading ? '' : 'is-disabled'}`} type="button" onClick={login} disabled={!loginValid || loginLoading}>
                 <span className={`auth-button__icon ${loginLoading ? 'auth-button__icon--loading' : ''}`} aria-hidden="true">{loginLoading ? '◌' : '🚀'}</span> {loginLoading ? 'Entrando...' : 'Entrar a INARA'}
               </button>
-              <p className="auth-recovery text-center text-xs"><a href="#" className="font-bold transition">¿Olvidaste tu contraseña? Recupérala aquí</a></p>
+              <p className="auth-recovery text-center text-xs"><button type="button" onClick={requestPasswordReset} disabled={resetLoading} className="font-bold transition underline">{resetLoading ? "Solicitando recuperación..." : "¿Olvidaste tu contraseña? Recupérala aquí"}</button></p>
               <p className="auth-muted text-center text-xs">¿No tienes una cuenta? <a href="#" className="font-bold transition">Créala en la siguiente sección</a></p>
             </div>
           </div>
@@ -255,14 +282,7 @@ export default function Auth({ onSession }) {
                 <input className={`w-full rounded-lg border px-3 py-2 font-medium transition-all ${registerForm.confirmPassword === registerForm.password ? 'border-violet-500 bg-slate-700/50 text-slate-100' : 'border-red-400 bg-slate-700/50 text-slate-100'}`} type={registerShowPassword ? 'text' : 'password'} placeholder="••••••••" value={registerForm.confirmPassword} onChange={(event) => setRegisterForm({ ...registerForm, confirmPassword: event.target.value })} />
                 {registerForm.confirmPassword.length > 0 && registerForm.confirmPassword !== registerForm.password && <p className="mt-1 text-xs text-red-400">Las contraseñas no coinciden</p>}
               </div>
-              <div>
-                <label className="auth-label block text-xs font-bold mb-1"><span className="auth-field-icon" aria-hidden="true">🎓</span> Rol</label>
-                <select className="w-full rounded-lg border border-slate-600 px-3 py-2 font-medium focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 bg-slate-700/50 text-slate-100 transition-all" value={registerForm.role} onChange={(event) => setRegisterForm({ ...registerForm, role: event.target.value })}>
-                  <option value="student" className="bg-slate-800">👨‍🎓 Estudiante</option>
-                  <option value="instructor" className="bg-slate-800">👨‍🏫 Docente</option>
-                  <option value="parent" className="bg-slate-800">👪 Padre/Tutor</option>
-                </select>
-              </div>
+              <p className="text-xs text-slate-400">El registro público crea una cuenta de estudiante. Los roles de docente, tutor y administrador se asignan de forma segura desde la administración.</p>
               <button className={`auth-button w-full rounded-lg px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 ${registerValid && !registerLoading ? '' : 'is-disabled'}`} type="button" onClick={register} disabled={!registerValid || registerLoading}>
                 <span className={`auth-button__icon ${registerLoading ? 'auth-button__icon--loading' : ''}`} aria-hidden="true">{registerLoading ? '◌' : '✨'}</span> {registerLoading ? 'Creando...' : 'Crear cuenta'}
               </button>
