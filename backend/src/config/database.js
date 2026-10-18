@@ -1,7 +1,9 @@
 import dotenv from "dotenv";
 import pg from "pg";
 
-dotenv.config();
+// The Neon CLI writes connection variables to the repository-root .env.local.
+// Load it for local development, while preserving variables injected by Vercel/CI.
+dotenv.config({ path: [".env.local", ".env"] });
 
 const { Pool } = pg;
 const useTest = process.env.NODE_ENV === "test";
