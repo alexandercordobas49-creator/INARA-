@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import { pool } from './config/database.js';
 
 import achievementRoutes from './routes/achievementRoutes.js';
 import atlasRoutes from './routes/atlasRoutes.js';
@@ -33,11 +34,14 @@ app.get('/', (req, res) => {
 
 
 // Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'INARA API'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    return res.json({ ok: true, service: 'INARA API', database: 'connected' });
+  } catch (error) {
+    console.error('Health check falló:', error.message);
+    return res.status(503).json({ ok: false, service: 'INARA API', database: 'unavailable' });
+  }
 });
 
 
