@@ -1,22 +1,37 @@
 # INARA Backend
 
-Este directorio contiene la API de backend de INARA, incluida la autenticación, los endpoints de asistencia y gestión de usuarios.
+API REST de INARA construida con Express y PostgreSQL.
 
 ## Rutas principales
 
-- `GET /api/health` — Verifica que el servicio esté activo.
-- `POST /api/auth/login` — Inicia sesión con `{ email, password }`.
-- `POST /api/auth/register` — Registra un usuario con `{ firstName, lastName, email, password, role }`.
-- `POST /api/auth/forgot` — Solicita restablecimiento de contraseña con `{ email }`.
-- `POST /api/auth/reset` — Restablece la contraseña con `{ email, token, password }`.
+- `GET /api/health` — comprueba que la API esté activa.
+- `GET /api/health/db` — comprueba la conexión con PostgreSQL.
+- `POST /api/auth/login` — inicia sesión con `{ email, password }`.
+- `POST /api/auth/register` — crea una cuenta de estudiante con `{ firstName, lastName, email, password }`.
+- `POST /api/auth/forgot` — solicita un enlace de recuperación.
+- `POST /api/auth/reset` — cambia la contraseña con `{ email, token, password }`; el token debe ser válido, no vencido y de un solo uso.
 
-> Nota: actualmente el endpoint `/auth/reset` acepta cualquier token en modo de desarrollo; en producción debe implementarse verificación de token expirado.
+El registro público no permite crear roles de docente, tutor o administrador. Esos roles se asignan desde administración.
 
-## Configuración de la base de datos de prueba
+## Variables de entorno
 
-El backend usa `dotenv` para cargar la configuración de la base de datos desde `.env`.
+Copia `.env.example` a `.env` y configura `DATABASE_URL` y un `JWT_SECRET` aleatorio de al menos 32 caracteres. Para producción, define también `FRONTEND_URL` y SMTP (`EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SECURE`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_FROM`). No subas `.env` ni credenciales a Git.
 
-Variables recomendadas para pruebas:
+## Base de datos
+
+Para una base nueva, aplica `database/schema.sql` desde la raíz del repositorio. Para una base existente, crea un respaldo y aplica las migraciones pendientes en orden, incluida `database/010_postgresql_single_source.sql`.
+
+La recuperación guarda solo el hash del token; los enlaces expiran a los 30 minutos y se invalidan después de usarse. En desarrollo, si SMTP no está configurado, el endpoint puede devolver un token de prueba. En producción nunca devuelve el token en la respuesta.
+
+## Pruebas
+
+Pruebas unitarias e integración básica:
+
+```bash
+npm test
+```
+
+Las pruebas de integración que escriben en la base requieren una base PostgreSQL separada y estas variables:
 
 ```env
 DB_HOST_TEST=localhost
@@ -28,35 +43,4 @@ NODE_ENV=test
 RUN_DB_TESTS=1
 ```
 
-### Crear base de datos de prueba
-
-Hay un script de ayuda que crea la base de datos de prueba y aplica el esquema SQL:
-
-```bash
-cd backend
-npm run setup:test-db
-```
-
-Asegúrate de tener instalados `createdb` y `psql` en tu entorno de PostgreSQL.
-
-## Ejecutar pruebas
-
-Pruebas unitarias e integración básica:
-
-```bash
-cd backend
-npm test
-```
-
-Pruebas de integración que usan la base de datos de prueba:
-
-```bash
-cd backend
-NODE_ENV=test RUN_DB_TESTS=1 npm test
-```
-
-## Notas adicionales
-
-- El archivo `src/config/database.js` usa variables con sufijo `_TEST` cuando `NODE_ENV=test`.
-- El script `backend/scripts/setup_test_db.js` aplica `database/schema.sql` a la base de datos configurada.
-- Si deseas pruebas completas de `login/register`, asegúrate de ejecutar el entorno de pruebas sobre una base de datos separada para no afectar datos de desarrollo.
+No ejecutes pruebas de escritura contra la base de producción.

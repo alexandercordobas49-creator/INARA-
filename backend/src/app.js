@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import { pool } from './config/database.js';
 
 import achievementRoutes from './routes/achievementRoutes.js';
 import atlasRoutes from './routes/atlasRoutes.js';
@@ -34,10 +35,17 @@ app.get('/', (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'INARA API'
-  });
+  return res.json({ ok: true, service: 'INARA API' });
+});
+
+app.get('/api/health/db', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    return res.json({ ok: true, service: 'INARA API', database: 'connected' });
+  } catch (error) {
+    console.error('Health check de PostgreSQL falló:', error.message);
+    return res.status(503).json({ ok: false, service: 'INARA API', database: 'unavailable' });
+  }
 });
 
 
@@ -55,5 +63,12 @@ app.use('/api/alerts', alertsRoutes);
 app.use('/api/competency', competencyRoutes);
 app.use('/api/risk', riskRoutes);
 
+
+// Última barrera para errores síncronos y errores enviados mediante next(error).
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  console.error("Error no controlado en la API:", error.message);
+  return res.status(500).json({ message: "Error interno del servidor" });
+});
 
 export default app;
