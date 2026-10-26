@@ -1,48 +1,11 @@
-﻿import { pool } from '../config/database.js';
-
-async function isParentOf(parentId, childId) {
-  const result = await pool.query(
-    `
-    SELECT 1
-    FROM parent_relations
-    WHERE parent_id = $1
-      AND child_id = $2
-    LIMIT 1
-    `,
-    [parentId, childId]
-  );
-
-  return result.rowCount > 0;
-}
-
-async function canViewUser(req, userId) {
-  if (!req.user) return false;
-
-  if (
-    req.user.role === 'admin' ||
-    req.user.role === 'instructor'
-  ) {
-    return true;
-  }
-
-  if (req.user.role === 'student') {
-    return req.user.id === userId;
-  }
-
-  if (req.user.role === 'parent') {
-    return await isParentOf(req.user.id, userId);
-  }
-
-  return false;
-}
+import { pool } from '../config/database.js';
+import { canAccessStudent } from '../middleware/accessControl.js';
 
 export async function achievementSummary(req, res) {
   try {
     const { userId } = req.params;
 
-    const allowed = await canViewUser(req, userId);
-
-    if (!allowed) {
+    if (!(await canAccessStudent(req.user, userId))) {
       return res.status(403).json({
         message: 'No autorizado'
       });
@@ -50,7 +13,7 @@ export async function achievementSummary(req, res) {
 
     const userResult = await pool.query(
       `
-      SELECT id
+      SELECT id, role
       FROM users
       WHERE id = $1
       LIMIT 1
@@ -58,7 +21,7 @@ export async function achievementSummary(req, res) {
       [userId]
     );
 
-    if (!userResult.rows[0]) {
+    if (!userResult.rows[0] || userResult.rows[0].role !== 'student') {
       return res.status(404).json({
         message: 'Usuario no encontrado'
       });

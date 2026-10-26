@@ -26,10 +26,34 @@ recomienda el URL pooled de la rama y base de datos correctas. Configura
 `DATABASE_URL` como variable privada en la configuración del servicio backend
 de Vercel; no uses el prefijo `VITE_` ni la añadas al frontend.
 
-Este repositorio no contiene `vercel.json` ni una función Vercel bajo `api/`.
-La configuración de build/rutas debe coincidir con la arquitectura elegida
-(backend separado o API en el mismo proyecto); no se ha desplegado ni validado
-una ruta `/api/*` en Vercel desde este repositorio.
+### Despliegue en Vercel
+
+El repositorio es un monorepo con dos aplicaciones. Crea dos proyectos Vercel
+desde el mismo repositorio y usa el mismo branch de Git:
+
+1. Backend: Root Directory `backend`. Vercel detecta la aplicación Express
+   exportada por `src/app.js`. Define `DATABASE_URL`, `JWT_SECRET` y
+   `CORS_ORIGINS` como variables privadas. `CORS_ORIGINS` debe contener el
+   origen exacto del frontend, por ejemplo `https://tu-frontend.vercel.app`
+   (sin `/api`); separa orígenes con comas. Añade `TRUST_PROXY_HOPS=1` solo si
+   el servicio se publica detrás de exactamente un proxy confiable; Vercel
+   activa automáticamente un salto de proxy confiable.
+2. Frontend: Root Directory `frontend`, Framework Preset Vite y Output
+   Directory `dist`. Define `VITE_API_URL` con la URL del backend y el prefijo
+   `/api`, por ejemplo `https://tu-backend.vercel.app/api`. Es una URL pública,
+   no una credencial.
+3. Despliega primero el backend, configura después el frontend y prueba
+   `https://tu-backend.vercel.app/api/health` y los flujos con usuarios
+   legítimos. Los dominios de ejemplo deben sustituirse por las URLs reales.
+
+En desarrollo, CORS permite `localhost:5173`; en producción solo permite los
+orígenes enumerados en `CORS_ORIGINS`. El middleware limita autenticación a 10
+intentos por 15 minutos y recuperación de contraseña a 5 por hora. El límite
+en memoria es por instancia; para un límite global consistente entre varias
+instancias, configura una regla WAF Rate Limiting de Vercel para las rutas
+`/api/auth/login`, `/api/auth/register`, `/api/auth/forgot` y
+`/api/auth/reset`:
+[documentación oficial de Vercel](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting).
 
 ## Configuración de la base de datos de prueba
 

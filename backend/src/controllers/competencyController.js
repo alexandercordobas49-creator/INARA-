@@ -1,4 +1,5 @@
 import { pool } from '../config/database.js';
+import { canAccessStudent } from '../middleware/accessControl.js';
 
 async function isParentOf(parentId, childId) {
   const result = await pool.query(
@@ -59,8 +60,7 @@ export async function getUserProgress(req, res) {
     const student = await pool.query('SELECT id FROM users WHERE id=$1', [userId]);
     if (!student.rowCount) return res.status(404).json({ message: 'Usuario no encontrado' });
 
-    if (req.user.role === 'student' && req.user.id !== userId) return res.status(403).json({ message: 'No autorizado' });
-    if (req.user.role === 'parent' && !(await isParentOf(req.user.id, userId))) return res.status(403).json({ message: 'No autorizado' });
+    if (!(await canAccessStudent(req.user, userId))) return res.status(403).json({ message: 'No autorizado' });
 
     const result = await pool.query(
       'SELECT * FROM user_competency_progress WHERE user_id=$1 ORDER BY updated_at DESC',
@@ -130,6 +130,10 @@ export async function completeMission(req, res) {
 
 export async function getRouteProgress(req, res) {
   try {
+    if (!(await canAccessStudent(req.user, req.params.userId))) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+
     const result = await pool.query(
       'SELECT * FROM user_competency_progress WHERE user_id=$1 AND route_id=$2',
       [req.params.userId, req.params.routeId]

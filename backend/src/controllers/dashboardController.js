@@ -1,5 +1,6 @@
 import { pool } from '../config/database.js';
 import { getLatestRisk } from '../services/riskService.js';
+import { canAccessStudent } from '../middleware/accessControl.js';
 
 function publicUser(row) {
   if (!row) return null;
@@ -78,12 +79,10 @@ export async function studentDashboard(req, res) {
   try {
     const student = await pool.query('SELECT id, role FROM users WHERE id=$1', [req.params.userId]);
     const target = student.rows[0];
-    if (!target) return res.status(404).json({ message: 'Estudiante no encontrado' });
-
-    if (req.user.role === 'student' && req.user.id !== target.id) {
-      return res.status(403).json({ message: 'No autorizado' });
+    if (!target || target.role !== 'student') {
+      return res.status(404).json({ message: 'Estudiante no encontrado' });
     }
-    if (req.user.role === 'parent' && !(await isParentOf(req.user.id, target.id))) {
+    if (!(await canAccessStudent(req.user, target.id))) {
       return res.status(403).json({ message: 'No autorizado' });
     }
 

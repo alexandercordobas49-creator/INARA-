@@ -43,6 +43,28 @@ const CourseStudentRepository = {
         return result.rows;
     },
 
+    async findByInstructor(instructorId) {
+        const result = await pool.query(`
+            SELECT cs.id, cs.course_id, cs.student_id, cs.enrollment_status, cs.created_at
+            FROM course_students cs
+            JOIN courses c ON c.id = cs.course_id
+            WHERE c.instructor_id = $1
+            ORDER BY cs.created_at DESC
+        `, [instructorId]);
+        return result.rows;
+    },
+
+    async findByStudentAndInstructor(studentId, instructorId) {
+        const result = await pool.query(`
+            SELECT cs.id, cs.course_id, cs.student_id, cs.enrollment_status, cs.created_at
+            FROM course_students cs
+            JOIN courses c ON c.id = cs.course_id
+            WHERE cs.student_id = $1 AND c.instructor_id = $2
+            ORDER BY cs.created_at DESC
+        `, [studentId, instructorId]);
+        return result.rows;
+    },
+
 
 
     async findByStudent(student_id) {

@@ -105,6 +105,12 @@ La base `neondb` de la rama Neon `production` ya recibió
 confirmó todas las columnas requeridas y `/api/health` respondió `200`. No se
 insertaron usuarios, cursos ni rutas demo.
 
+La API limita lecturas de asistencia, dashboard, XP, logros, matrículas y
+cursos por rol: administradores pueden consultar globalmente; docentes quedan
+limitados a sus cursos activos; estudiantes a sus propios datos; y padres a
+estudiantes relacionados. Las escrituras docentes de asistencia/matrícula
+requieren cursos asignados y matrícula activa cuando corresponda.
+
 ## Motor y demostracion
 
 El motor oficial calcula un score de 0 a 100 con estas ponderaciones: asistencia 30%, XP 20%, engagement 20%, racha 15% y progreso de competencias 15%. Cada factor aumenta cuando la señal indica menor continuidad. Los niveles son `low` (0-34), `medium` (35-59), `high` (60-79) y `critical` (80-100).

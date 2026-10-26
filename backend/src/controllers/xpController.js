@@ -1,35 +1,7 @@
 ﻿import XPService from "../services/xpService.js";
 import { findUserById } from "../repositories/UserRepository.js";
 import { pool } from "../config/database.js";
-
-async function isParentOf(parentId, childId) {
-    const result = await pool.query(
-        `
-        SELECT 1
-        FROM parent_relations
-        WHERE parent_id = $1
-          AND child_id = $2
-        LIMIT 1
-        `,
-        [parentId, childId]
-    );
-
-    return result.rowCount > 0;
-}
-
-function canViewUser(req, userId) {
-    if (!req.user) return false;
-
-    if (req.user.role === "admin" || req.user.role === "instructor") {
-        return true;
-    }
-
-    if (req.user.role === "student") {
-        return req.user.id === userId;
-    }
-
-    return false;
-}
+import { canAccessStudent } from '../middleware/accessControl.js';
 
 export async function xpSummary(req, res) {
     try {
@@ -43,15 +15,7 @@ export async function xpSummary(req, res) {
             });
         }
 
-        if (req.user?.role === "parent") {
-            const allowed = await isParentOf(req.user.id, userId);
-
-            if (!allowed) {
-                return res.status(403).json({
-                    message: "No autorizado"
-                });
-            }
-        } else if (!canViewUser(req, userId)) {
+        if (user.role !== 'student' || !(await canAccessStudent(req.user, userId))) {
             return res.status(403).json({
                 message: "No autorizado"
             });

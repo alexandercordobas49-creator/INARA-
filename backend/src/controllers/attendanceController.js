@@ -3,13 +3,29 @@ import AttendanceRepository from '../repositories/AttendanceRepository.js';
 import XpRepository from '../repositories/XpRepository.js';
 import { pool } from '../config/database.js';
 import { evaluateStudentRisk } from '../services/riskService.js';
+import { canAccessStudent } from '../middleware/accessControl.js';
 
 export async function listAttendance(req, res) {
   try {
     const { userId } = req.query;
-    const records = userId
-      ? await AttendanceRepository.findByStudent(userId)
-      : await AttendanceRepository.findAll();
+    if (userId && !(await canAccessStudent(req.user, userId))) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    let records;
+    if (req.user.role === 'admin') {
+      records = userId
+        ? await AttendanceRepository.findByStudent(userId)
+        : await AttendanceRepository.findAll();
+    } else if (req.user.role === 'instructor') {
+      records = await AttendanceRepository.findByInstructor(req.user.id, userId);
+    } else if (req.user.role === 'parent') {
+      records = await AttendanceRepository.findByParent(req.user.id, userId);
+    } else if (req.user.role === 'student') {
+      records = await AttendanceRepository.findByStudent(req.user.id);
+    } else {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
     return res.json(records);
   } catch (error) {
     console.error(error);
@@ -28,12 +44,19 @@ export async function saveAttendance(req, res) {
       return res.status(400).json({ message: 'Estado de asistencia invalido' });
     }
 
-    const [userCheck, courseCheck] = await Promise.all([
-      pool.query('SELECT id FROM users WHERE id=$1', [userId]),
-      pool.query('SELECT id FROM courses WHERE id=$1', [courseId])
-    ]);
-    if (!userCheck.rowCount || !courseCheck.rowCount) {
-      return res.status(404).json({ message: 'Estudiante o curso no encontrado' });
+    const enrollment = await pool.query(`
+      SELECT u.id
+      FROM users u
+      JOIN course_students cs ON cs.student_id = u.id
+      JOIN courses c ON c.id = cs.course_id
+      WHERE u.id = $1
+        AND u.role = 'student'
+        AND c.id = $2
+        AND cs.enrollment_status = 'active'
+        AND ($3 = 'admin' OR c.instructor_id = $4)
+    `, [userId, courseId, req.user.role, req.user.id]);
+    if (!enrollment.rowCount) {
+      return res.status(403).json({ message: 'El estudiante no tiene una matrícula activa en un curso autorizado.' });
     }
 
     const existing = await AttendanceRepository.findOne(userId, courseId, sessionDate);

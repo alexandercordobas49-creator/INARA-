@@ -48,6 +48,37 @@ const AttendanceRepository = {
         return result.rows;
     },
 
+    async findByInstructor(instructorId, studentId) {
+        const params = studentId ? [instructorId, studentId] : [instructorId];
+        const studentFilter = studentId ? 'AND ar.user_id = $2' : '';
+        const result = await pool.query(`
+            SELECT ar.*, c.name AS course_name
+            FROM attendance_records ar
+            JOIN courses c ON c.id = ar.course_id
+            JOIN course_students cs ON cs.course_id = c.id AND cs.student_id = ar.user_id
+            WHERE c.instructor_id = $1
+              AND cs.enrollment_status = 'active'
+              ${studentFilter}
+            ORDER BY ar.session_date DESC
+        `, params);
+        return result.rows;
+    },
+
+    async findByParent(parentId, studentId) {
+        const params = studentId ? [parentId, studentId] : [parentId];
+        const studentFilter = studentId ? 'AND ar.user_id = $2' : '';
+        const result = await pool.query(`
+            SELECT ar.*, c.name AS course_name
+            FROM attendance_records ar
+            JOIN courses c ON c.id = ar.course_id
+            JOIN parent_relations pr ON pr.child_id = ar.user_id
+            WHERE pr.parent_id = $1
+              ${studentFilter}
+            ORDER BY ar.session_date DESC
+        `, params);
+        return result.rows;
+    },
+
 
     async findOne(userId, courseId, sessionDate) {
 
