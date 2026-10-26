@@ -13,6 +13,7 @@ import alertsRoutes from './routes/alertsRoutes.js';
 import competencyRoutes from './routes/competencyRoutes.js';
 import courseStudentRoutes from './routes/courseStudentRoutes.js';
 import riskRoutes from './routes/riskRoutes.js';
+import { checkDatabase } from './config/database.js';
 
 
 const app = express();
@@ -32,12 +33,31 @@ app.get('/', (req, res) => {
 });
 
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'INARA API'
-  });
+// Readiness check: reports database connectivity and required schema separately.
+app.get('/api/health', async (req, res) => {
+  try {
+    const { databaseConnected, schemaAvailable } = await checkDatabase();
+    const ready = databaseConnected && schemaAvailable;
+
+    return res.status(ready ? 200 : 503).json({
+      ok: ready,
+      service: 'INARA API',
+      server: 'running',
+      database: databaseConnected ? 'connected' : 'unavailable',
+      schema: schemaAvailable ? 'available' : 'unavailable'
+    });
+  } catch (error) {
+    console.error(
+      `Database health check failed${error.code ? ` (${error.code})` : ''}.`
+    );
+    return res.status(503).json({
+      ok: false,
+      service: 'INARA API',
+      server: 'running',
+      database: 'unavailable',
+      schema: 'unknown'
+    });
+  }
 });
 
 

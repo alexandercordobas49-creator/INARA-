@@ -1,18 +1,28 @@
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dbName = process.env.DB_NAME_TEST || process.env.DB_NAME;
-const dbUser = process.env.DB_USER_TEST || process.env.DB_USER;
-const dbHost = process.env.DB_HOST_TEST || process.env.DB_HOST || 'localhost';
-const dbPort = process.env.DB_PORT_TEST || process.env.DB_PORT || '5432';
-const dbPassword = process.env.DB_PASSWORD_TEST || process.env.DB_PASSWORD;
+const dbName = process.env.DB_NAME_TEST;
+const dbUser = process.env.DB_USER_TEST;
+const dbHost = process.env.DB_HOST_TEST || 'localhost';
+const dbPort = process.env.DB_PORT_TEST || '5432';
+const dbPassword = process.env.DB_PASSWORD_TEST;
 
 if (!dbName || !dbUser) {
-  console.error('Faltan variables DB_NAME_TEST/DB_USER_TEST o DB_NAME/DB_USER en .env');
+  console.error('Define DB_NAME_TEST y DB_USER_TEST en backend/.env antes de preparar la base de pruebas.');
+  process.exit(1);
+}
+
+if (!['localhost', '127.0.0.1', '::1'].includes(dbHost)) {
+  console.error('El setup de pruebas solo permite PostgreSQL local; no se conectará a hosts remotos.');
+  process.exit(1);
+}
+
+if (!/^\d+$/.test(dbPort) || Number(dbPort) < 1 || Number(dbPort) > 65535) {
+  console.error('DB_PORT_TEST debe ser un puerto válido.');
   process.exit(1);
 }
 
@@ -25,27 +35,32 @@ const sqlPath = path.resolve(process.cwd(), '..', 'database', 'schema.sql');
 const riskMigrationPath = path.resolve(process.cwd(), '..', 'database', 'schema', '011_dropout_prevention.sql');
 const interventionMigrationPath = path.resolve(process.cwd(), '..', 'database', '012_intervention_types.sql');
 const notificationMigrationPath = path.resolve(process.cwd(), '..', 'database', '013_notification_read_state.sql');
+const passwordResetMigrationPath = path.resolve(process.cwd(), '..', 'database', '014_password_reset_tokens.sql');
 
 try {
   console.log(`Creando base de datos de prueba: ${dbName}`);
-  execSync(`createdb -h ${dbHost} -p ${dbPort} -U ${dbUser} ${dbName}`, { env, stdio: 'inherit' });
+  execFileSync('createdb', [
+    '--if-not-exists',
+    '-h', dbHost,
+    '-p', dbPort,
+    '-U', dbUser,
+    dbName
+  ], { env, stdio: 'inherit' });
 } catch (error) {
-  if (error.status === 1) {
-    console.log('La base de datos ya existe, continuo con el esquema...');
-  } else {
-    console.error('Error creando la base de datos:', error.message);
-    process.exit(1);
-  }
+  console.error('No se pudo crear o comprobar la base de datos local de pruebas.');
+  process.exit(1);
 }
 
 try {
   console.log(`Aplicando esquema desde ${sqlPath}`);
-  execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${sqlPath}"`, { env, stdio: 'inherit' });
-  execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${riskMigrationPath}"`, { env, stdio: 'inherit' });
-  execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${interventionMigrationPath}"`, { env, stdio: 'inherit' });
-  execSync(`psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${notificationMigrationPath}"`, { env, stdio: 'inherit' });
-  console.log('Esquema y migración de prevención aplicados correctamente.');
-} catch (error) {
-  console.error('Error aplicando el esquema:', error.message);
+  const psqlArgs = ['-h', dbHost, '-p', dbPort, '-U', dbUser, '-d', dbName, '-v', 'ON_ERROR_STOP=1', '-f'];
+  execFileSync('psql', [...psqlArgs, sqlPath], { env, stdio: 'inherit' });
+  execFileSync('psql', [...psqlArgs, riskMigrationPath], { env, stdio: 'inherit' });
+  execFileSync('psql', [...psqlArgs, interventionMigrationPath], { env, stdio: 'inherit' });
+  execFileSync('psql', [...psqlArgs, notificationMigrationPath], { env, stdio: 'inherit' });
+  execFileSync('psql', [...psqlArgs, passwordResetMigrationPath], { env, stdio: 'inherit' });
+  console.log('Esquema y migraciones aplicados correctamente.');
+} catch {
+  console.error('Error aplicando el esquema a la base de pruebas local.');
   process.exit(1);
 }

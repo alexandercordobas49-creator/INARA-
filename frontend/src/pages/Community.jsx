@@ -180,7 +180,7 @@ export default function Community({ session, selectedStudent }) {
       type: "info",
       title: "Compartir en redes sociales",
       message:
-        `Copia el enlace: https://ina-track.edu/posts/${postId}\n\n` +
+        `Copia el enlace: ${window.location.origin}/posts/${postId}\n\n` +
         "Puedes compartirlo en WhatsApp, Facebook, Twitter o enviar por email.",
       isOpen: true
     });
@@ -508,4 +508,3 @@ export default function Community({ session, selectedStudent }) {
     </>
   );
 }
-

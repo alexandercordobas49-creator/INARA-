@@ -1,11 +1,19 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { roles } from '../models/User.js';
-import { createUser, findUserByEmail, updatePasswordByEmail } from '../repositories/UserRepository.js';
+import {
+  createUser,
+  findUserByEmail,
+  updatePasswordByEmail,
+  saveResetToken,
+  consumeResetToken
+} from '../repositories/UserRepository.js';
 import { signToken } from '../middleware/authMiddleware.js';
 
 const SALT_ROUNDS = 10;
+const RESET_TOKEN_MINUTES = 15;
 
+const hashToken = (token) =>
+  crypto.createHash('sha256').update(String(token)).digest('hex');
 
 export async function login(req, res) {
 
@@ -45,10 +53,10 @@ export async function register(req, res) {
     firstName,
     lastName,
     email,
-    password,
-    role = 'student'
+    password
   } = req.body;
 
+  const role = 'student';
 
 
   if (!firstName || !lastName || !email || !password) {
@@ -59,25 +67,12 @@ export async function register(req, res) {
 
   }
 
-
-
-  if (!roles.includes(role)) {
-
+  if (typeof password !== 'string' || password.length < 8) {
     return res.status(400).json({
-      message: 'Rol invalido'
+      message: 'La contrasena debe tener al menos 8 caracteres'
     });
 
   }
-
-  if (role === 'admin') {
-
-    return res.status(403).json({
-      message: 'El rol de administrador no puede crearse desde el registro publico'
-    });
-
-  }
-
-
 
   const exists = await findUserByEmail(email);
 
@@ -129,33 +124,38 @@ export async function register(req, res) {
 
 export async function forgotPassword(req, res) {
   const { email } = req.body;
+
+  const genericResponse = {
+    message: 'Si el correo existe, recibirás instrucciones para restablecer la contraseña.'
+  };
+
   const user = await findUserByEmail(email);
-  // For demo/dev: generate a token and return it in response (simulate email)
-  const token = crypto.randomBytes(20).toString('hex');
 
-  if (!user) {
-    // Do not reveal whether user exists
-    return res.json({ message: 'Si el correo existe, recibirás instrucciones para restablecer la contraseña.' });
-  }
+  if (!user) return res.json(genericResponse);
 
-  // In a real app: store the token and expiry, send email with link
-  return res.json({ message: 'Token generado (dev):', token });
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_MINUTES * 60 * 1000);
+
+  await saveResetToken(user.id, hashToken(token), expiresAt);
+
+  return res.json(genericResponse);
 }
 
 export async function resetPassword(req, res) {
   const { email, token, password } = req.body;
 
-  if (!password || password.length < 8) {
+  if (typeof password !== 'string' || password.length < 8) {
     return res.status(400).json({ message: 'La contraseña debe tener al menos 8 caracteres' });
   }
 
   const user = await findUserByEmail(email);
-  if (!user) {
-    return res.status(400).json({ message: 'Usuario no encontrado' });
+  const valid = user && (await consumeResetToken(user.id, hashToken(token)));
+
+  if (!valid) {
+    return res.status(400).json({ message: 'Token inválido o expirado' });
   }
 
-  // In a real app: verify the token. Here we accept any token for dev purposes.
-  const hashed = await bcrypt.hash(password, 10);
+  const hashed = await bcrypt.hash(password, SALT_ROUNDS);
   const updated = await updatePasswordByEmail(email, hashed);
 
   if (!updated) {

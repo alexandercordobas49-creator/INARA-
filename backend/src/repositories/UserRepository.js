@@ -62,3 +62,23 @@ export async function updatePasswordByEmail(email, password_hash) {
   `, [password_hash, email]);
   return result.rows[0];
 }
+
+export async function saveResetToken(userId, tokenHash, expiresAt) {
+  await pool.query(`
+    INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (user_id)
+    DO UPDATE SET token_hash = EXCLUDED.token_hash, expires_at = EXCLUDED.expires_at
+  `, [userId, tokenHash, expiresAt]);
+}
+
+export async function consumeResetToken(userId, tokenHash) {
+  const result = await pool.query(`
+    DELETE FROM password_reset_tokens
+    WHERE user_id = $1
+      AND token_hash = $2
+      AND expires_at > NOW()
+    RETURNING user_id
+  `, [userId, tokenHash]);
+  return result.rowCount > 0;
+}

@@ -44,6 +44,14 @@ const indicatorMetrics = [
   { icon: "📈", label: "Promedio asistencia", value: 93, suffix: "%" },
 ];
 
+function PlatformMetricIcon({ icon }) {
+  if (icon === "ATLAS") {
+    return <img src="/assets/ATLAS.png" alt="Atlas IA" className="platform-metric-atlas" />;
+  }
+
+  return icon;
+}
+
 const departments = [
   {
     id: "rio-san-juan",
@@ -609,7 +617,9 @@ export default function PlatformInfo() {
           <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {indicatorMetrics.slice(0, 4).map((metric) => (
               <div key={metric.label} className="platform-metric-card p-6">
-                <div className="text-3xl">{metric.icon}</div>
+                <div className="platform-metric-icon">
+                  <PlatformMetricIcon icon={metric.icon} />
+                </div>
 
                 <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
                   {metric.label}
@@ -628,7 +638,9 @@ export default function PlatformInfo() {
           <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {indicatorMetrics.slice(4).map((metric) => (
               <div key={metric.label} className="platform-metric-card p-6">
-                <div className="text-3xl">{metric.icon}</div>
+                <div className="platform-metric-icon">
+                  <PlatformMetricIcon icon={metric.icon} />
+                </div>
 
                 <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
                   {metric.label}
@@ -781,7 +793,9 @@ export default function PlatformInfo() {
                     selectedFlow === step.id ? "active" : ""
                   }`}
                 >
-                  <span className="platform-flow-step-icon">{step.icon}</span>
+                  <span className="platform-flow-step-icon">
+                    <PlatformMetricIcon icon={step.icon} />
+                  </span>
 
                   <span className="font-semibold text-slate-900">
                     {step.label}
@@ -842,7 +856,9 @@ export default function PlatformInfo() {
           <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {modules.map((module) => (
               <div key={module.label} className="platform-module-card p-6">
-                {module.icon !== "ATLAS" && (
+                {module.icon === "ATLAS" ? (
+                  <img src="/assets/ATLAS.png" alt="Atlas IA" className="platform-module-atlas" />
+                ) : (
                   <div className="text-4xl">{module.icon}</div>
                 )}
 
@@ -935,7 +951,11 @@ export default function PlatformInfo() {
           <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {benefits.map((benefit) => (
               <div key={benefit.title} className="platform-benefit-card p-6">
-                <div className="text-4xl">{benefit.icon}</div>
+                {benefit.icon === "ATLAS" ? (
+                  <img src="/assets/ATLAS.png" alt="Atlas IA" className="platform-benefit-atlas" />
+                ) : (
+                  <div className="text-4xl">{benefit.icon}</div>
+                )}
 
                 <p className="mt-4 text-xl font-bold text-slate-950">
                   {benefit.title}

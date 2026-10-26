@@ -54,13 +54,10 @@ demo123
 
 ## Persistencia
 
-Para que funcione sin configurar PostgreSQL al inicio, el backend guarda datos en:
-
-```text
-backend/src/data/database.json
-```
-
-Si borras ese archivo, se vuelve a crear con datos demo.
+El backend utiliza PostgreSQL. Configura `DATABASE_URL` en `backend/.env`
+para desarrollo local; el backend acepta también las variables heredadas
+`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. No coloques
+credenciales de base de datos en variables `VITE_*` ni en el frontend.
 
 ## PostgreSQL
 
@@ -69,3 +66,6 @@ El diseno SQL esta en:
 ```text
 database/schema.sql
 ```
+
+La aplicación no aplica el esquema automáticamente. Revisa las instrucciones
+y el impacto de cada migración en `database/README.md` antes de ejecutarla.
