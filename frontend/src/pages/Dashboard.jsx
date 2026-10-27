@@ -21,7 +21,13 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
 
         if (!res) throw new Error('Respuesta vacía del servidor');
 
-        const xpTotal = Number(res?.xp?.total ?? res?.student?.totalXp ?? 0);\n        const nextLevelXp = Number(res?.xp?.nextLevel?.minXp ?? 500);\n        setDashboard({\n          ...res,\n          attendanceHistory: Array.isArray(attendanceData) ? attendanceData : [],\n          xp: { ...res.xp, progressToNextLevel: nextLevelXp > 0 ? Math.min(100, Math.round((xpTotal / nextLevelXp) * 100)) : 100 }\n        });
+        const xpTotal = Number(res?.xp?.total ?? res?.student?.totalXp ?? 0);
+        const nextLevelXp = Number(res?.xp?.nextLevel?.minXp ?? 500);
+        setDashboard({
+          ...res,
+          attendanceHistory: Array.isArray(attendanceData) ? attendanceData : [],
+          xp: { ...res.xp, progressToNextLevel: nextLevelXp > 0 ? Math.min(100, Math.round((xpTotal / nextLevelXp) * 100)) : 100 }
+        });
       } catch (err) {
         console.error(err);
         setError(err.message || 'No se pudo cargar el panel.');
