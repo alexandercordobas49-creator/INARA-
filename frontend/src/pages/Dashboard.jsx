@@ -57,6 +57,8 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
   const xpTotal = dashboard?.xp?.total ?? 0;
   const currentLevel = dashboard?.xp?.currentLevel ?? 1;
   const progressPercentage = dashboard?.xp?.progressToNextLevel ?? 0;
+  const totalAttendance = dashboard?.attendanceSummary?.total ?? 0;
+  const presentAttendance = dashboard?.attendanceSummary?.present ?? 0;
   const attendanceRate = totalAttendance ? Math.round((presentAttendance / totalAttendance) * 100) : 0;
   const monthlyGoal = 20;
   const goalProgress = Math.min(100, Math.round((presentAttendance / monthlyGoal) * 100));
@@ -65,8 +67,6 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
   const achievements = dashboard?.achievements || [];
   const xpEvents = dashboard?.xpEvents || [];
   const attendanceHistory = dashboard?.attendanceHistory || [];
-  const totalAttendance = dashboard?.attendanceSummary?.total ?? 0;
-  const presentAttendance = dashboard?.attendanceSummary?.present ?? 0;
 
   return (
     <div className="space-y-12">
