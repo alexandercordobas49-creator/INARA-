@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { api, notify } from '../api.js';
 
 export default function Auth({ onSession }) {
-  const [loginForm, setLoginForm] = useState({ email: 'valeria@INARA.test', password: 'demo123' });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({
     firstName: '',
     lastName: '',
