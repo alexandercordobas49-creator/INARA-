@@ -73,7 +73,7 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-5xl font-extrabold text-neutral-900">
-          ¡Bienvenida de nuevo, {selectedStudent.firstName}! 👋
+          ¡Bienvenida de nuevo, {selectedStudent.firstName || selectedStudent.first_name || 'Valeria'}! 👋
         </h1>
         <p className="text-neutral-500 text-lg">
           Cada paso que das hoy, te acerca al futuro que sueñas.
