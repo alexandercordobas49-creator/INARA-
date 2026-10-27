@@ -24,6 +24,11 @@ function isoDate(date) {
   return date.toISOString().slice(0, 10);
 }
 
+function databaseDate(value) {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value).slice(0, 10);
+}
+
 function sessionDates(start, end, weekdays) {
   const result = [];
   const cursor = new Date(`${start}T12:00:00Z`);
@@ -157,7 +162,7 @@ async function main() {
       await client.query(
         `INSERT INTO xp_events (user_id, points, source, description, created_at)
          VALUES ($1, $2, 'attendance', $3, $4)`,
-        [valeriaId, points, `Piloto simulado: asistencia ${row.status === 'present' ? 'presente' : 'tarde'}`, `${String(row.session_date).slice(0, 10)}T15:00:00Z`]
+        [valeriaId, points, `Piloto simulado: asistencia ${row.status === 'present' ? 'presente' : 'tarde'}`, `${databaseDate(row.session_date)}T15:00:00Z`]
       );
     }
     await client.query('UPDATE users SET total_xp = $1, current_level = $2, updated_at = NOW() WHERE id = $3', [
