@@ -99,7 +99,7 @@ async function main() {
     for (const course of courseIds) {
       for (const studentId of studentIds) {
         await client.query(
-          `INSERT INTO course_students (course_id, student_id, enrolled_at, status)
+          `INSERT INTO course_students (course_id, student_id, created_at, enrollment_status)
            VALUES ($1, $2, $3, 'active')
            ON CONFLICT (course_id, student_id) DO NOTHING`,
           [course.id, studentId, `${START_DATE}T12:00:00Z`]
