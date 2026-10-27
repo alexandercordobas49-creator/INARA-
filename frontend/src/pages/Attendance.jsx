@@ -4,7 +4,7 @@ import { api, notify } from '../api.js';
 import Panel from '../components/Panel.jsx';
 import './Attendance.css';
 
-export default function Attendance({ users = [], courses = [], reload }) {
+export default function Attendance({ users = [], courses = [], reload, session }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState(null);
@@ -87,12 +87,13 @@ export default function Attendance({ users = [], courses = [], reload }) {
    */
   useEffect(() => {
     loadRecords();
-  }, [valeriaUser]);
+  }, [valeriaUser, session?.user?.id, session?.user?.role]);
 
   async function loadRecords() {
     try {
-      const endpoint = valeriaUser
-        ? `/attendance?userId=${encodeURIComponent(valeriaUser.id)}`
+      const activeStudentId = session?.user?.role === 'student' ? session.user.id : valeriaUser?.id;
+      const endpoint = activeStudentId
+        ? `/attendance?userId=${encodeURIComponent(activeStudentId)}`
         : '/attendance';
 
       const data = await api(endpoint);
@@ -203,7 +204,7 @@ export default function Attendance({ users = [], courses = [], reload }) {
    * Filtrar registros.
    */
   const displayRecords = useMemo(() => {
-    if (valeriaUser) {
+    if (session?.user?.role === 'student' || valeriaUser) {
       return records;
     }
 
@@ -221,12 +222,9 @@ export default function Attendance({ users = [], courses = [], reload }) {
     });
   }, [records, valeriaUser]);
 
-  const recordsToShow =
-    displayRecords.length > 0
-      ? displayRecords
-      : fallbackAttendanceDetails;
+  const recordsToShow = displayRecords;
 
-  const usingFallback = displayRecords.length === 0;
+  const usingFallback = false;
 
   const studentName = valeriaUser
     ? `${valeriaUser.firstName} ${valeriaUser.lastName || ''}`.trim()
