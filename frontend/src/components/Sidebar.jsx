@@ -42,7 +42,7 @@ export default function Sidebar({ session, onLogout }) {
         >
           <div className="flex w-full items-center justify-center rounded-2xl bg-white/10 px-3 py-2 shadow-[0_18px_40px_-20px_rgba(255,255,255,0.35)]">
             <img
-              src="/assets/logo-INARA.png?v=20260915"
+              src="/assets/logo-inara.png?v=20261027"
               alt="INARA"
               className="h-auto w-full max-w-[8rem] object-contain transition-transform duration-500 ease-out group-hover:scale-105 group-hover:rotate-1 group-active:scale-95"
             />
