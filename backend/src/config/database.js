@@ -79,32 +79,44 @@ pool.on("error", (error) => {
 
 export async function checkDatabase() {
   const result = await pool.query(`
-    SELECT current_database(), current_schema(), NOW(),
-      (
-        to_regclass('public.users') IS NOT NULL AND
-        to_regclass('public.courses') IS NOT NULL AND
-        to_regclass('public.course_students') IS NOT NULL AND
-        to_regclass('public.attendance_records') IS NOT NULL AND
-        to_regclass('public.levels') IS NOT NULL AND
-        to_regclass('public.achievements') IS NOT NULL AND
-        to_regclass('public.user_achievements') IS NOT NULL AND
-        to_regclass('public.streaks') IS NOT NULL AND
-        to_regclass('public.xp_events') IS NOT NULL AND
-        to_regclass('public.student_risk') IS NOT NULL AND
-        to_regclass('public.recommendations') IS NOT NULL AND
-        to_regclass('public.interventions') IS NOT NULL AND
-        to_regclass('public.parent_relations') IS NOT NULL AND
-        to_regclass('public.notifications') IS NOT NULL AND
-        to_regclass('public.competency_routes') IS NOT NULL AND
-        to_regclass('public.user_competency_progress') IS NOT NULL AND
-        to_regclass('public.evidences') IS NOT NULL AND
-        to_regclass('public.password_reset_tokens') IS NOT NULL
-      ) AS schema_available
+    SELECT
+      current_database() AS database_name,
+      current_schema() AS schema_name,
+      ARRAY(
+        SELECT required.table_name
+        FROM unnest(ARRAY[
+          'users',
+          'courses',
+          'course_students',
+          'attendance_records',
+          'levels',
+          'achievements',
+          'user_achievements',
+          'streaks',
+          'xp_events',
+          'student_risk',
+          'recommendations',
+          'interventions',
+          'parent_relations',
+          'notifications',
+          'competency_routes',
+          'user_competency_progress',
+          'evidences',
+          'password_reset_tokens'
+        ]::text[]) AS required(table_name)
+        WHERE to_regclass(format('public.%I', required.table_name)) IS NULL
+      ) AS missing_tables
   `);
+
+  const row = result.rows[0];
+  const missingTables = row?.missing_tables ?? [];
 
   return {
     databaseConnected: true,
-    schemaAvailable: result.rows[0]?.schema_available === true
+    databaseName: row?.database_name ?? null,
+    schemaName: row?.schema_name ?? null,
+    missingTables,
+    schemaAvailable: missingTables.length === 0
   };
 }
 
@@ -112,7 +124,12 @@ export async function connectDatabase() {
   try {
     const status = await checkDatabase();
     if (!status.schemaAvailable) {
-      throw new Error("The required INARA database schema is not available.");
+      const error = new Error("The required INARA database schema is not available.");
+      error.code = "INARA_SCHEMA_MISSING";
+      error.missingTables = status.missingTables;
+      error.databaseName = status.databaseName;
+      error.schemaName = status.schemaName;
+      throw error;
     }
 
     console.log("PostgreSQL connected; INARA schema is available.");
@@ -124,6 +141,10 @@ export async function connectDatabase() {
     console.error(
       `PostgreSQL connection or INARA schema check failed${code}. Verify DATABASE_URL or DB_* settings and review the required migrations.`
     );
+    if (error.missingTables?.length) {
+      console.error(`Connected database: ${error.databaseName ?? "unknown"}; schema: ${error.schemaName ?? "unknown"}.`);
+      console.error(`Missing INARA tables: ${error.missingTables.join(", ")}`);
+    }
     throw error;
   }
 }
