@@ -9,13 +9,18 @@ const CourseRepository = {
         const result = await pool.query(
             `
             SELECT
-                id,
-                name,
-                instructor_id,
-                status,
-                created_at
-            FROM courses
-            ORDER BY created_at DESC
+                c.id,
+                c.name,
+                c.instructor_id,
+                c.status,
+                c.created_at,
+                CONCAT_WS(' ', instructor.first_name, instructor.last_name) AS instructor_name,
+                COUNT(cs.student_id)::int AS student_count
+            FROM courses c
+            LEFT JOIN users instructor ON instructor.id = c.instructor_id
+            LEFT JOIN course_students cs ON cs.course_id = c.id AND cs.status = 'active'
+            GROUP BY c.id, instructor.first_name, instructor.last_name
+            ORDER BY c.created_at DESC
             `
         );
 

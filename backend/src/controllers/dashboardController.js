@@ -1,42 +1,108 @@
 import { publicUser, readData, isParentOf } from '../data/store.js';
+import { pool } from '../config/database.js';
 
-export function studentDashboard(req, res) {
-  const data = readData();
-  const student = data.users.find((user) => user.id === req.params.userId);
+export async function studentDashboard(req, res) {
+  try {
+    const studentResult = await pool.query(
+      `SELECT id, first_name, last_name, email, role, total_xp, current_level, created_at
+       FROM users WHERE id = $1`,
+      [req.params.userId]
+    );
+    const student = studentResult.rows[0];
 
-  if (!student) return res.status(404).json({ message: 'Estudiante no encontrado' });
-  if (req.user.role === 'student' && req.user.id !== student.id) {
-    return res.status(403).json({ message: 'No autorizado' });
+    if (!student || student.role !== 'student') {
+      return res.status(404).json({ message: 'Estudiante no encontrado' });
+    }
+    if (req.user.role === 'student' && req.user.id !== student.id) {
+      return res.status(403).json({ message: 'No autorizado' });
+    }
+    if (req.user.role === 'parent') {
+      const relation = await pool.query(
+        'SELECT 1 FROM parent_relations WHERE parent_id = $1 AND child_id = $2 LIMIT 1',
+        [req.user.id, student.id]
+      );
+      if (!relation.rowCount) return res.status(403).json({ message: 'No autorizado' });
+    }
+
+    const [attendanceResult, achievementsResult, xpResult, streakResult, levelsResult] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*)::int AS total,
+           COUNT(*) FILTER (WHERE status = 'present')::int AS present,
+           COUNT(*) FILTER (WHERE status = 'late')::int AS late,
+           COUNT(*) FILTER (WHERE status = 'absent')::int AS absent,
+           COUNT(*) FILTER (WHERE status = 'excused')::int AS excused
+         FROM attendance_records WHERE user_id = $1`,
+        [student.id]
+      ),
+      pool.query(
+        `SELECT ua.id, ua.earned_at, json_build_object(
+           'name', a.name, 'description', a.description, 'xpReward', a.xp_reward
+         ) AS achievement
+         FROM user_achievements ua
+         JOIN achievements a ON a.id = ua.achievement_id
+         WHERE ua.user_id = $1 ORDER BY ua.earned_at DESC LIMIT 6`,
+        [student.id]
+      ),
+      pool.query(
+        `SELECT id, points, source, description, created_at
+         FROM xp_events WHERE user_id = $1 ORDER BY created_at DESC LIMIT 6`,
+        [student.id]
+      ),
+      pool.query(
+        `SELECT COALESCE(MAX(current_count), 0)::int AS current_count,
+                COALESCE(MAX(best_count), 0)::int AS best_count,
+                MAX(last_activity_date) AS last_activity_date
+         FROM streaks WHERE user_id = $1`,
+        [student.id]
+      ),
+      pool.query(
+        'SELECT level_number, name, min_xp FROM levels ORDER BY min_xp',
+        []
+      )
+    ]);
+
+    const historyResult = await pool.query(
+      `SELECT ar.id, ar.session_date, ar.status, ar.notes, c.name AS course_name
+       FROM attendance_records ar
+       JOIN courses c ON c.id = ar.course_id
+       WHERE ar.user_id = $1
+       ORDER BY ar.session_date DESC, c.name
+       LIMIT 60`,
+      [student.id]
+    );
+    const attendanceSummary = attendanceResult.rows[0];
+    const streak = streakResult.rows[0];
+    const currentLevel = Number(student.current_level || 1);
+    const nextLevel = levelsResult.rows.find((level) => Number(level.min_xp) > Number(student.total_xp)) || null;
+
+    return res.json({
+      student: {
+        id: student.id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        email: student.email,
+        role: student.role,
+        created_at: student.created_at
+      },
+      attendanceSummary,
+      xp: {
+        total: Number(student.total_xp || 0),
+        currentLevel,
+        nextLevel,
+        progressToNextLevel: nextLevel
+          ? Math.min(100, Math.round((Number(student.total_xp) / Number(nextLevel.min_xp)) * 100))
+          : 100
+      },
+      streak,
+      achievements: achievementsResult.rows,
+      xpEvents: xpResult.rows,
+      attendanceHistory: historyResult.rows
+    });
+  } catch (error) {
+    console.error('Error construyendo dashboard del estudiante:', error);
+    return res.status(500).json({ message: 'No se pudo cargar el panel del estudiante' });
   }
-  if (req.user.role === 'parent' && !isParentOf(data, req.user.id, student.id)) {
-    return res.status(403).json({ message: 'No autorizado' });
-  }
-
-  const attendance = data.attendance.filter((record) => record.userId === student.id);
-  const achievements = data.userAchievements
-    .filter((item) => item.userId === student.id)
-    .map((item) => ({
-      ...item,
-      achievement: data.achievements.find((achievement) => achievement.id === item.achievementId)
-    }));
-
-  return res.json({
-    student: publicUser(student),
-    attendanceSummary: {
-      total: attendance.length,
-      present: attendance.filter((record) => record.status === 'present').length,
-      late: attendance.filter((record) => record.status === 'late').length,
-      absent: attendance.filter((record) => record.status === 'absent').length
-    },
-    xp: {
-      total: student.totalXp,
-      currentLevel: student.currentLevel,
-      nextLevel: data.levels.find((level) => level.minXp > student.totalXp)
-    },
-    streak: data.streaks.find((streak) => streak.userId === student.id),
-    achievements,
-    xpEvents: data.xpEvents.filter((event) => event.userId === student.id).slice(0, 6)
-  });
 }
 
 export function parentChildren(req, res) {

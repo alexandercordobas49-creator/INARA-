@@ -13,7 +13,7 @@ export default function Attendance({ users, courses, reload }) {
     notes: ''
   });
   const students = users.filter((user) => user.role === 'student');
-  const valeriaUser = students.find((student) => student.firstName?.toLowerCase() === 'valeria');
+  const valeriaUser = students.find((student) => (student.firstName || student.first_name || '').trim().toLowerCase() === 'valeria');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -67,23 +67,6 @@ export default function Attendance({ users, courses, reload }) {
     }
   }
 
-  const fallbackAttendanceDetails = [
-    {
-      id: 'fallback-1',
-      course_name: 'Ingles Conversacional',
-      session_date: '2026-06-20',
-      status: 'present',
-      notes: 'Asistió a tiempo'
-    },
-    {
-      id: 'fallback-2',
-      course_name: 'Tecnologias Digitales',
-      session_date: '2026-06-21',
-      status: 'late',
-      notes: 'Llegó tarde pero asistió'
-    }
-  ];
-
   const displayRecords = useMemo(() => {
     if (valeriaUser) {
       return records;
@@ -95,9 +78,9 @@ export default function Attendance({ users, courses, reload }) {
     });
   }, [records, valeriaUser]);
 
-  const recordsToShow = displayRecords.length > 0 ? displayRecords : fallbackAttendanceDetails;
-  const usingFallback = displayRecords.length === 0;
-  const studentName = valeriaUser ? `${valeriaUser.firstName} ${valeriaUser.lastName}` : 'Valeria';
+  const recordsToShow = displayRecords;
+  const usingFallback = false;
+  const studentName = valeriaUser ? `${valeriaUser.firstName || valeriaUser.first_name} ${valeriaUser.lastName || valeriaUser.last_name}` : 'Valeria';
   const attendanceLabel = `${recordsToShow.length} asistencia${recordsToShow.length === 1 ? '' : 's'}`;
 
   const statusCounts = useMemo(() => {
@@ -163,7 +146,7 @@ export default function Attendance({ users, courses, reload }) {
                 <label className="block text-sm font-semibold text-slate-700">Estudiante</label>
                 <select className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100" value={form.userId} onChange={(event) => setForm({ ...form, userId: event.target.value })}>
                   {students.map((student) => (
-                    <option key={student.id} value={student.id}>{student.firstName} {student.lastName}</option>
+                    <option key={student.id} value={student.id}>{student.firstName || student.first_name} {student.lastName || student.last_name}</option>
                   ))}
                 </select>
               </div>
@@ -277,7 +260,7 @@ export default function Attendance({ users, courses, reload }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {recordsToShow.map((record) => (
+                  {recordsToShow.length === 0 ? <tr><td colSpan={4} className="px-5 py-10 text-center text-slate-500">Todavía no hay registros de asistencia para mostrar. Carga el escenario piloto o registra una asistencia.</td></tr> : recordsToShow.map((record) => (
                     <tr key={record.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-4 font-medium text-slate-900">{formatCourse(record)}</td>
                       <td className="px-5 py-4 text-slate-600">{formatDate(record.session_date || record.sessionDate)}</td>
