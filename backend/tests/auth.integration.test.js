@@ -12,7 +12,7 @@ describe('Auth routes (integration smoke)', () => {
 
   it('GET /api/health reports the server, database, and schema separately', async () => {
     vi.spyOn(pool, 'query').mockResolvedValue({
-      rows: [{ schema_available: true }]
+      rows: [{ database_name: 'neondb', schema_name: 'public', missing_tables: [] }]
     });
 
     const res = await request(app).get('/api/health');
@@ -25,7 +25,7 @@ describe('Auth routes (integration smoke)', () => {
 
   it('GET /api/health returns 503 when the application schema is missing', async () => {
     vi.spyOn(pool, 'query').mockResolvedValue({
-      rows: [{ schema_available: false }]
+      rows: [{ database_name: 'neondb', schema_name: 'public', missing_tables: ['users'] }]
     });
 
     const res = await request(app).get('/api/health');
@@ -48,7 +48,7 @@ describe('Auth routes (integration smoke)', () => {
 
   it('allows configured local frontend origins but omits CORS headers for unknown origins', async () => {
     vi.spyOn(pool, 'query').mockResolvedValue({
-      rows: [{ schema_available: true }]
+      rows: [{ database_name: 'neondb', schema_name: 'public', missing_tables: [] }]
     });
 
     const allowed = await request(app)
