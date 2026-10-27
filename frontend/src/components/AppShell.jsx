@@ -50,7 +50,7 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
               <div className="flex items-center gap-4">
                 <div>
                   <img
-                    src="/assets/Logo-removebg-preview.png?v=20260915"
+                    src="/assets/logo-inara.png?v=20261027"
                     alt="INARA"
                     className="h-24 w-auto max-w-[32rem] max-h-24 shrink-0 object-contain object-left sm:h-24 sm:max-w-[32rem]"
                   />
