@@ -57,11 +57,9 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
   const xpTotal = dashboard?.xp?.total ?? 0;
   const currentLevel = dashboard?.xp?.currentLevel ?? 1;
   const progressPercentage = dashboard?.xp?.progressToNextLevel ?? 0;
-  const attendanceRate = dashboard?.attendanceSummary?.total
-    ? Math.round(
-        (dashboard.attendanceSummary.present / dashboard.attendanceSummary.total) * 100
-      )
-    : 0;
+  const attendanceRate = totalAttendance ? Math.round((presentAttendance / totalAttendance) * 100) : 0;
+  const monthlyGoal = 20;
+  const goalProgress = Math.min(100, Math.round((presentAttendance / monthlyGoal) * 100));
   const streak = dashboard?.streak?.current_count ?? dashboard?.streak?.currentCount ?? 0;
   const bestStreak = dashboard?.streak?.best_count ?? dashboard?.streak?.bestCount ?? streak;
   const achievements = dashboard?.achievements || [];
@@ -99,7 +97,7 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl mb-2">📚</p>
               <p className="text-xs font-semibold text-neutral-500">Clases completadas</p>
@@ -107,13 +105,18 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
             </div>
             <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
               <p className="text-3xl mb-2">🔥</p>
+              <p className="text-xs font-semibold text-neutral-500">Racha actual</p>
+              <p className="text-2xl font-extrabold mt-2 text-neutral-900">{streak} sesiones</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
+              <p className="text-3xl mb-2">🔥</p>
               <p className="text-xs font-semibold text-neutral-500">Racha más larga</p>
               <p className="text-2xl font-extrabold mt-2 text-neutral-900">{bestStreak} sesiones</p>
             </div>
             <div className="bg-white rounded-2xl p-6 text-center border border-neutral-100 shadow-sm">
-              <p className="text-3xl mb-2">🏆</p>
-              <p className="text-xs font-semibold text-neutral-500">Logros obtenidos</p>
-              <p className="text-2xl font-extrabold mt-2 text-neutral-900">{achievements.length}</p>
+              <p className="text-3xl mb-2">⚡</p>
+              <p className="text-xs font-semibold text-neutral-500">XP · Nivel {currentLevel}</p>
+              <p className="text-2xl font-extrabold mt-2 text-neutral-900">{xpTotal.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -161,17 +164,17 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
           </div>
           <div className="space-y-6">
             <div>
-              <p className="text-sm font-semibold text-neutral-700 mb-2">Completar 20 clases</p>
-              <p className="text-sm text-neutral-500 mb-3">Vas por 18/20 clases completadas</p>
+              <p className="text-sm font-semibold text-neutral-700 mb-2">Meta: 20 asistencias</p>
+              <p className="text-sm text-neutral-500 mb-3">Vas por {presentAttendance}/{monthlyGoal} asistencias registradas</p>
               <div className="h-3 bg-neutral-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-success-500 to-success-400"
-                  style={{ width: '90%' }}
+                  style={{ width: `${goalProgress}%` }}
                 />
               </div>
             </div>
             <div className="rounded-2xl bg-white p-6 text-center border border-neutral-100 shadow-sm">
-              <p className="text-4xl font-extrabold text-success-600">90%</p>
+              <p className="text-4xl font-extrabold text-success-600">{goalProgress}%</p>
               <p className="text-xs text-neutral-500 mt-2">Completado</p>
             </div>
             <div className="rounded-xl bg-white p-4 text-center border border-neutral-100 shadow-sm">
