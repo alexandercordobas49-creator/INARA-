@@ -12,8 +12,8 @@ const CourseStudentRepository = {
                 id,
                 course_id,
                 student_id,
-                enrollment_status,
-                created_at
+                status AS enrollment_status,
+                enrolled_at AS created_at
             FROM course_students
             ORDER BY created_at DESC
             `
@@ -32,8 +32,8 @@ const CourseStudentRepository = {
                 id,
                 course_id,
                 student_id,
-                enrollment_status,
-                created_at
+                status AS enrollment_status,
+                enrolled_at AS created_at
             FROM course_students
             WHERE course_id = $1
             `,
@@ -45,7 +45,7 @@ const CourseStudentRepository = {
 
     async findByInstructor(instructorId) {
         const result = await pool.query(`
-            SELECT cs.id, cs.course_id, cs.student_id, cs.enrollment_status, cs.created_at
+            SELECT cs.id, cs.course_id, cs.student_id, cs.status AS enrollment_status, cs.enrolled_at AS created_at
             FROM course_students cs
             JOIN courses c ON c.id = cs.course_id
             WHERE c.instructor_id = $1
@@ -56,7 +56,7 @@ const CourseStudentRepository = {
 
     async findByStudentAndInstructor(studentId, instructorId) {
         const result = await pool.query(`
-            SELECT cs.id, cs.course_id, cs.student_id, cs.enrollment_status, cs.created_at
+            SELECT cs.id, cs.course_id, cs.student_id, cs.status AS enrollment_status, cs.enrolled_at AS created_at
             FROM course_students cs
             JOIN courses c ON c.id = cs.course_id
             WHERE cs.student_id = $1 AND c.instructor_id = $2
@@ -75,8 +75,8 @@ const CourseStudentRepository = {
                 id,
                 course_id,
                 student_id,
-                enrollment_status,
-                created_at
+                status AS enrollment_status,
+                enrolled_at AS created_at
             FROM course_students
             WHERE student_id = $1
             `,
@@ -103,10 +103,10 @@ const CourseStudentRepository = {
             (
                 course_id,
                 student_id,
-                enrollment_status
+                status
             )
             VALUES ($1,$2,$3)
-            RETURNING *
+            RETURNING id, course_id, student_id, status AS enrollment_status, enrolled_at AS created_at
             `,
             [
                 course_id,
