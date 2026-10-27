@@ -74,17 +74,19 @@ async function main() {
 
     const courseIds = [];
     for (const spec of courseSpecs) {
-      const result = await client.query(
-        `INSERT INTO courses (name, instructor_id, status, created_at)
-         VALUES ($1, $2, 'active', $3)
-         ON CONFLICT DO NOTHING
-         RETURNING id`,
-        [spec.name, instructorId, `${START_DATE}T12:00:00Z`]
+      const existing = await client.query(
+        'SELECT id FROM courses WHERE name = $1 ORDER BY created_at LIMIT 1',
+        [spec.name]
       );
-      let courseId = result.rows[0]?.id;
+      let courseId = existing.rows[0]?.id;
       if (!courseId) {
-        const existing = await client.query('SELECT id FROM courses WHERE name = $1 ORDER BY created_at LIMIT 1', [spec.name]);
-        courseId = existing.rows[0].id;
+        const inserted = await client.query(
+          `INSERT INTO courses (name, instructor_id, status, created_at)
+           VALUES ($1, $2, 'active', $3)
+           RETURNING id`,
+          [spec.name, instructorId, `${START_DATE}T12:00:00Z`]
+        );
+        courseId = inserted.rows[0].id;
       }
       courseIds.push({ id: courseId, ...spec });
     }
