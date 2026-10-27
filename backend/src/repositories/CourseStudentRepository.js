@@ -49,7 +49,7 @@ const CourseStudentRepository = {
             FROM course_students cs
             JOIN courses c ON c.id = cs.course_id
             WHERE c.instructor_id = $1
-            ORDER BY cs.created_at DESC
+            ORDER BY cs.enrolled_at DESC
         `, [instructorId]);
         return result.rows;
     },
@@ -60,7 +60,7 @@ const CourseStudentRepository = {
             FROM course_students cs
             JOIN courses c ON c.id = cs.course_id
             WHERE cs.student_id = $1 AND c.instructor_id = $2
-            ORDER BY cs.created_at DESC
+            ORDER BY cs.enrolled_at DESC
         `, [studentId, instructorId]);
         return result.rows;
     },
