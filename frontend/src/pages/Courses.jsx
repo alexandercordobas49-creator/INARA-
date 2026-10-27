@@ -1,72 +1,19 @@
-export default function Courses({ session, courses }) {
-  const myCourses = [
-    {
-      id: 1,
-      name: 'Matemáticas',
-      icon: '∫',
-      progress: 80,
-      instructor: 'Dr. Carlos López',
-      students: 24,
-      color: 'from-blue-500 to-indigo-500',
-      lastAccess: 'Hace 2 horas',
-      status: 'En progreso'
-    },
-    {
-      id: 2,
-      name: 'Química',
-      icon: '⚗️',
-      progress: 60,
-      instructor: 'Dra. María García',
-      students: 19,
-      color: 'from-green-500 to-teal-500',
-      lastAccess: 'Hace 5 horas',
-      status: 'En progreso'
-    },
-    {
-      id: 3,
-      name: 'Historia',
-      icon: '📖',
-      progress: 40,
-      instructor: 'Prof. Juan Rodríguez',
-      students: 31,
-      color: 'from-amber-500 to-orange-500',
-      lastAccess: 'Ayer',
-      status: 'En progreso'
-    },
-    {
-      id: 4,
-      name: 'Idiomas',
-      icon: '🌍',
-      progress: 55,
-      instructor: 'Prof. Ana Martínez',
-      students: 22,
-      color: 'from-purple-500 to-pink-500',
-      lastAccess: 'Hace 3 días',
-      status: 'En progreso'
-    },
-    {
-      id: 5,
-      name: 'Biología',
-      icon: '🔬',
-      progress: 70,
-      instructor: 'Dr. Roberto Silva',
-      students: 26,
-      color: 'from-emerald-500 to-cyan-500',
-      lastAccess: 'Hace 1 hora',
-      status: 'En progreso'
-    },
-    {
-      id: 6,
-      name: 'Física',
-      icon: '⚛️',
-      progress: 45,
-      instructor: 'Prof. Miguel Ángel',
-      students: 20,
-      color: 'from-red-500 to-pink-500',
-      lastAccess: 'Hace 6 horas',
-      status: 'En progreso'
-    }
+export default function Courses({ session, courses = [] }) {
+  const palette = [
+    { icon: '📘', color: 'from-emerald-500 to-teal-600' },
+    { icon: '💻', color: 'from-sky-500 to-cyan-600' },
+    { icon: '🧠', color: 'from-amber-500 to-orange-500' },
+    { icon: '🌎', color: 'from-indigo-500 to-violet-600' }
   ];
+  const myCourses = courses.map((course, index) => ({
+    ...course,
+    icon: palette[index % palette.length].icon,
+    color: palette[index % palette.length].color,
+    instructor: course.instructor_name || 'Equipo docente',
+    students: Number(course.student_count || 0),
+    lastAccess: 'Seguimiento activo',
+    status: course.status === 'active' ? 'En progreso' : course.status
+  }));
 
   return (
     <div className="space-y-6">
@@ -93,7 +40,7 @@ export default function Courses({ session, courses }) {
 
       {/* Courses Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {myCourses.map((course) => (
+        {myCourses.length === 0 ? <div className="md:col-span-2 lg:col-span-3 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50 p-8 text-center"><p className="text-lg font-bold text-emerald-900">Tus clases aparecerán aquí</p><p className="mt-2 text-sm text-emerald-800">Cuando se cargue el piloto de Valeria, verás los cursos y la cantidad de compañeros matriculados.</p></div> : myCourses.map((course) => (
           <div
             key={course.id}
             className="rounded-2xl bg-white border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
@@ -103,7 +50,7 @@ export default function Courses({ session, courses }) {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-4xl">{course.icon}</span>
                 <span className="text-sm font-bold bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                  {course.progress}%
+                  {course.status}
                 </span>
               </div>
               <h3 className="text-xl font-bold">{course.name}</h3>
@@ -112,20 +59,6 @@ export default function Courses({ session, courses }) {
 
             {/* Content */}
             <div className="p-6 space-y-4">
-              {/* Progress Bar */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs font-semibold text-slate-600 uppercase">Progreso</p>
-                  <p className="text-sm font-bold text-slate-900">{course.progress}%</p>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className={`bg-gradient-to-r ${course.color} h-full rounded-full transition-all duration-500`}
-                    style={{ width: `${course.progress}%` }}
-                  />
-                </div>
-              </div>
-
               {/* Info */}
               <div className="flex justify-between text-sm">
                 <div className="space-y-2">
