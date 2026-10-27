@@ -106,7 +106,7 @@ export default function Auth({ onSession }) {
         <div className="auth-card auth-card--intro lg:col-span-1 rounded-2xl p-6 sm:p-7 border relative overflow-hidden">
           <div className="relative z-10">
             <div className="auth-brand">
-              <img src="/assets/logo-INARA.png?v=20260915" alt="INARA" className="auth-brand__logo" />
+              <img src="/assets/logo-inara.png?v=20261027" alt="INARA" className="auth-brand__logo" />
               <span className="auth-brand__deco" aria-hidden="true">🎓</span>
               <span className="auth-brand__welcome">Bienvenido a</span>
               <div className="auth-brand__name"><span>INA</span><span className="auth-brand__suffix">RA</span></div>
