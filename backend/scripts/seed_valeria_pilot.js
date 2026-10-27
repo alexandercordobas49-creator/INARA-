@@ -157,7 +157,7 @@ async function main() {
       await client.query(
         `INSERT INTO xp_events (user_id, points, source, description, created_at)
          VALUES ($1, $2, 'attendance', $3, $4)`,
-        [valeriaId, points, `Piloto simulado: asistencia ${row.status === 'present' ? 'presente' : 'tarde'}`, `${row.session_date.toISOString().slice(0, 10)}T15:00:00Z`]
+        [valeriaId, points, `Piloto simulado: asistencia ${row.status === 'present' ? 'presente' : 'tarde'}`, `${String(row.session_date).slice(0, 10)}T15:00:00Z`]
       );
     }
     await client.query('UPDATE users SET total_xp = $1, current_level = $2, updated_at = NOW() WHERE id = $3', [
@@ -165,6 +165,31 @@ async function main() {
       xpTotal >= 5000 ? 5 : xpTotal >= 2500 ? 4 : xpTotal >= 1200 ? 3 : xpTotal >= 500 ? 2 : 1,
       valeriaId
     ]);
+
+    const achievementSpecs = [
+      ['first-attendance', 'Primer paso', 'Registró su primera asistencia en el piloto.', 50],
+      ['streak-5', 'Constancia en marcha', 'Mantuvo una racha de cinco sesiones consecutivas.', 100],
+      ['pilot-20', 'Veinte pasos adelante', 'Acumuló al menos veinte asistencias en el piloto.', 150]
+    ];
+    for (const [code, name, description, reward] of achievementSpecs) {
+      await client.query(
+        `INSERT INTO achievements (code, name, description, xp_reward)
+         VALUES ($1, $2, $3, $4) ON CONFLICT (code) DO NOTHING`,
+        [code, name, description, reward]
+      );
+    }
+    const eligibleAchievements = [];
+    if (valeriaRows.rows.length >= 1) eligibleAchievements.push('first-attendance');
+    if ([...valeriaSessionResults.values()].length >= 5) eligibleAchievements.push('streak-5');
+    if (valeriaRows.rows.length >= 20) eligibleAchievements.push('pilot-20');
+    for (const code of eligibleAchievements) {
+      await client.query(
+        `INSERT INTO user_achievements (user_id, achievement_id, earned_at)
+         SELECT $1, a.id, $2 FROM achievements a WHERE a.code = $3
+         ON CONFLICT (user_id, achievement_id) DO NOTHING`,
+        [valeriaId, `${END_DATE}T15:00:00Z`, code]
+      );
+    }
 
     for (const course of courseIds) {
       const courseRows = await client.query(
