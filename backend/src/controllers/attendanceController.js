@@ -148,6 +148,40 @@ export async function saveAttendance(req, res) {
 
 
 
+    // Recalcular racha por sesiones de este curso, no por días naturales.
+    const recentSessions = await pool.query(
+      `SELECT session_date, status
+       FROM attendance_records
+       WHERE user_id = $1 AND course_id = $2
+       ORDER BY session_date DESC`,
+      [userId, courseId]
+    );
+    let currentCount = 0;
+    for (const session of recentSessions.rows) {
+      if (session.status !== 'present' && session.status !== 'late') break;
+      currentCount += 1;
+    }
+    let run = 0;
+    let bestCount = 0;
+    for (const session of [...recentSessions.rows].reverse()) {
+      if (session.status === 'present' || session.status === 'late') {
+        run += 1;
+        bestCount = Math.max(bestCount, run);
+      } else {
+        run = 0;
+      }
+    }
+    await pool.query(
+      `INSERT INTO streaks (user_id, course_id, current_count, best_count, last_activity_date, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (user_id, course_id) DO UPDATE SET
+         current_count = EXCLUDED.current_count,
+         best_count = GREATEST(streaks.best_count, EXCLUDED.best_count),
+         last_activity_date = EXCLUDED.last_activity_date,
+         updated_at = NOW()`,
+      [userId, courseId, currentCount, bestCount, recentSessions.rows[0]?.session_date ?? null]
+    );
+
     return res.status(201).json(record);
 
 
