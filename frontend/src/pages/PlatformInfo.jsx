@@ -520,7 +520,7 @@ export default function PlatformInfo() {
 
             <div className="space-y-5">
               <img
-                src="/assets/logo-INARA.png"
+                src="/assets/logo-inara.png?v=20261027"
                 alt="Logo oficial de INARA"
                 className="h-32 w-auto max-w-full object-contain mix-blend-multiply md:h-40"
               />{" "}
