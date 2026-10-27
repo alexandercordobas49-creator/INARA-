@@ -153,6 +153,31 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
         </div>
       </div>
 
+      {/* Historial de asistencia del piloto */}
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Desde el 20 de junio de 2026</p>
+            <h2 className="mt-1 text-xl font-extrabold text-slate-900">Historial reciente de asistencia</h2>
+            <p className="mt-1 text-sm text-slate-500">Registros del escenario piloto guardados en PostgreSQL.</p>
+          </div>
+          <a href="/attendance" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">Ver historial completo →</a>
+        </div>
+        <div className="space-y-3">
+          {attendanceHistory.slice(0, 6).length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay asistencias registradas.</p> : attendanceHistory.slice(0, 6).map((record) => (
+            <div key={record.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+              <div>
+                <p className="font-semibold text-slate-900">{record.course_name}</p>
+                <p className="mt-1 text-xs text-slate-500">{record.session_date ? new Date(record.session_date).toLocaleDateString('es-NI', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' }) : 'Fecha no disponible'}</p>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${record.status === 'present' ? 'bg-emerald-100 text-emerald-800' : record.status === 'late' ? 'bg-amber-100 text-amber-800' : record.status === 'absent' ? 'bg-rose-100 text-rose-800' : 'bg-sky-100 text-sky-800'}`}>
+                {record.status === 'present' ? 'Presente' : record.status === 'late' ? 'Tarde' : record.status === 'absent' ? 'Ausente' : 'Justificado'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Meta y Actividad */}
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Meta del mes */}
