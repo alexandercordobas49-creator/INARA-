@@ -14,6 +14,8 @@ export default function Auth({ onSession }) {
   const [loginShowPassword, setLoginShowPassword] = useState(false);
   const [registerShowPassword, setRegisterShowPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
 
   function validateEmail(email) {
     return /\S+@\S+\.\S+/.test(email);
@@ -44,6 +46,8 @@ export default function Auth({ onSession }) {
   }, [registerForm]);
 
   async function login() {
+    if (loginLoading) return;
+
     try {
       if (!loginValid) {
         setMessage('Completa email y contraseña correctamente');
@@ -51,6 +55,7 @@ export default function Auth({ onSession }) {
         return;
       }
 
+      setLoginLoading(true);
       const session = await api('/auth/login', {
         method: 'POST',
         body: JSON.stringify(loginForm)
@@ -61,10 +66,14 @@ export default function Auth({ onSession }) {
     } catch (error) {
       setMessage(error.message);
       notify('error', error.message || 'Error iniciando sesión');
+    } finally {
+      setLoginLoading(false);
     }
   }
 
   async function register() {
+    if (registerLoading) return;
+
     try {
       if (!registerValid) {
         setMessage('Revisa los datos del formulario.');
@@ -72,6 +81,7 @@ export default function Auth({ onSession }) {
         return;
       }
 
+      setRegisterLoading(true);
       const session = await api('/auth/register', {
         method: 'POST',
         body: JSON.stringify(registerForm)
@@ -83,59 +93,58 @@ export default function Auth({ onSession }) {
     } catch (error) {
       setMessage(error.message);
       notify('error', error.message || 'Error creando cuenta');
+    } finally {
+      setRegisterLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Elementos decorativos de fondo */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-violet-500/10 rounded-full blur-3xl"></div>
-      </div>
-
+    <div className="auth-page min-h-screen relative overflow-hidden">
       {/* CONTENEDOR PRINCIPAL */}
-      <div className="relative z-10 grid lg:grid-cols-3 gap-6 p-6 sm:p-8 max-w-7xl mx-auto">
+      <div className="auth-layout relative z-10 grid lg:grid-cols-3 gap-4 p-4 sm:p-6 max-w-5xl mx-auto">
         {/* PANEL IZQUIERDO - BIENVENIDA */}
-        <div className="lg:col-span-1 bg-gradient-to-br from-slate-800/80 via-blue-900/50 to-slate-800/80 rounded-[2rem] p-8 border border-emerald-500/30 backdrop-blur shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 opacity-5 text-7xl">🎓</div>
+        <div className="auth-card auth-card--intro lg:col-span-1 rounded-2xl p-6 sm:p-7 border relative overflow-hidden">
           <div className="relative z-10">
+            <div className="auth-brand">
+              <img src="/assets/logo-INARA.png?v=20260915" alt="INARA" className="auth-brand__logo" />
+              <span className="auth-brand__deco" aria-hidden="true">🎓</span>
+              <span className="auth-brand__welcome">Bienvenido a</span>
+              <div className="auth-brand__name"><span>INA</span><span className="auth-brand__suffix">RA</span></div>
+              <p>Tu camino hacia el éxito académico</p>
+            </div>
             
-            
-            <h1 className="text-4xl font-bold text-slate-200 mb-2">Bienvenido a</h1>
-            <h2 className="text-6xl font-black bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-500 bg-clip-text text-transparent mb-4">INARA</h2>
-            <p className="text-emerald-300/80 italic text-lg font-semibold mb-8">Tu camino hacia el éxito</p>
-            
-            <div className="space-y-5 my-8 border-t border-emerald-500/20 pt-8">
-              <div className="flex items-start gap-4">
-                <span className="text-3xl flex-shrink-0">📚</span>
+            <div className="auth-journey my-6 border-t pt-6">
+              <div className="auth-journey__step">
+                <span className="auth-benefit-icon flex-shrink-0">📚</span>
                 <div>
-                  <p className="font-bold text-emerald-300">Aprende</p>
-                  <p className="text-sm text-slate-400">Contenido estructurado y personalizado</p>
+                  <p className="font-bold">Aprende</p>
+                  <p className="text-sm">Contenido estructurado de alta calidad diseñado para tu ritmo.</p>
                 </div>
               </div>
-              <div className="flex items-start gap-4">
-                <span className="text-3xl flex-shrink-0">📈</span>
+              <div className="auth-journey__connector" aria-hidden="true"></div>
+              <div className="auth-journey__step">
+                <span className="auth-benefit-icon flex-shrink-0">📈</span>
                 <div>
-                  <p className="font-bold text-emerald-300">Crece</p>
-                  <p className="text-sm text-slate-400">Gana XP y sube de nivel</p>
+                  <p className="font-bold">Crece</p>
+                  <p className="text-sm">Sigue tu progreso académico, gana XP y sube de nivel.</p>
                 </div>
               </div>
-              <div className="flex items-start gap-4">
-                <span className="text-3xl flex-shrink-0">🎯</span>
+              <div className="auth-journey__connector" aria-hidden="true"></div>
+              <div className="auth-journey__step">
+                <span className="auth-benefit-icon flex-shrink-0">🎯</span>
                 <div>
-                  <p className="font-bold text-emerald-300">Logra</p>
-                  <p className="text-sm text-slate-400">Desbloquea logros y reconocimientos</p>
+                  <p className="font-bold">Logra</p>
+                  <p className="text-sm">Alcanza tus objetivos y desbloquea insignias de excelencia.</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-slate-700/50 to-violet-900/30 border border-violet-500/30 rounded-2xl p-5 mt-8 backdrop-blur">
+            <div className="auth-ai rounded-xl p-4 mt-7">
               <div className="flex gap-3">
-                <span className="text-5xl flex-shrink-0">🤖</span>
+                <span className="auth-ai__icon text-3xl flex-shrink-0">🤖</span>
                 <div>
-                  <p className="font-bold text-violet-300">Con IA que te acompaña</p>
-                  <p className="text-xs text-slate-300">Seguimiento, motivación y éxito académico en un solo lugar</p>
+                  <p className="font-bold">Siempre hay un siguiente paso.</p>
+                  <p className="text-xs">INARA analiza tu progreso y te ayuda a identificar cómo avanzar.</p>
                 </div>
               </div>
             </div>
@@ -143,24 +152,25 @@ export default function Auth({ onSession }) {
         </div>
 
         {/* PANELES DERECHOS */}
-        <div className="lg:col-span-2 grid md:grid-cols-2 gap-6">
+        <div className="auth-forms lg:col-span-2 grid md:grid-cols-2 gap-4">
           {/* PANEL LOGIN */}
-          <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 rounded-[2rem] p-8 border border-emerald-500/20 backdrop-blur shadow-2xl hover:border-emerald-500/40 transition-all">
-            <div className="flex justify-center mb-6">
-              <div className="bg-emerald-500/20 border border-emerald-500/40 p-4 rounded-full">
-                <span className="text-5xl">🔐</span>
+          <div className="auth-card auth-card--form auth-card--login rounded-2xl p-6 sm:p-7 border transition-all">
+            <div className="auth-login-heading">
+              <div className="auth-form-icon" aria-hidden="true">
+                <span className="auth-emoji-icon">🔐</span>
               </div>
+              <div className="auth-card-kicker">ACCESO SEGURO</div>
+              <h3 className="text-2xl font-bold text-center mb-1">Iniciar sesión</h3>
+              <p className="text-center mb-5 font-medium text-sm">Accede a tu cuenta</p>
             </div>
-            <h3 className="text-2xl font-bold text-center text-slate-100 mb-1">Iniciar sesión</h3>
-            <p className="text-center text-slate-400 mb-8 font-medium text-sm">Accede a tu cuenta</p>
-            
-            {message && <div className="mb-4 bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 px-4 py-3 rounded-xl font-semibold text-center text-sm">{message}</div>}
+            {message && <div className="auth-form-message mb-4" role="status">{message}</div>}
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">📧 Email</label>
+                <label className="auth-label block text-sm font-bold mb-2"><span className="auth-field-icon" aria-hidden="true">📧</span> Email</label>
                 <input 
-                  className={`w-full rounded-xl border px-4 py-3 font-medium focus:outline-none transition-all ${validateEmail(loginForm.email) ? 'border-emerald-500 focus:ring-emerald-500/30 bg-slate-700/50 text-slate-100' : 'border-red-400 bg-slate-700/50 text-slate-100'}`}
+                  className={`auth-input w-full rounded-xl border px-4 py-3 font-medium focus:outline-none transition-all ${validateEmail(loginForm.email) ? 'border-emerald-500' : 'border-red-400'}`}
+                  type="email"
                   placeholder="tu@email.com"
                   value={loginForm.email} 
                   onChange={(event) => setLoginForm({ ...loginForm, email: event.target.value })} 
@@ -170,59 +180,61 @@ export default function Auth({ onSession }) {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-300 mb-2">🔒 Contraseña</label>
+                <label className="auth-label block text-sm font-bold mb-2"><span className="auth-field-icon" aria-hidden="true">🔒</span> Contraseña</label>
                 <div className="relative">
                   <input
-                    className={`w-full rounded-xl border px-4 py-3 font-medium focus:outline-none transition-all ${loginForm.password ? 'border-emerald-500 focus:ring-emerald-500/30 bg-slate-700/50 text-slate-100' : 'border-slate-600 bg-slate-700/50 text-slate-100'}`}
+                    className={`auth-input w-full rounded-xl border px-4 py-3 font-medium focus:outline-none transition-all ${loginForm.password ? 'border-emerald-500' : 'border-slate-300'}`}
                     type={loginShowPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={loginForm.password}
                     onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })}
                   />
-                  <button type="button" className="absolute right-3 top-3 text-sm text-slate-300" onClick={() => setLoginShowPassword((v) => !v)}>{loginShowPassword ? 'Ocultar' : 'Mostrar'}</button>
+                  <button type="button" className="auth-toggle absolute right-3 top-3 text-sm" onClick={() => setLoginShowPassword((v) => !v)}>{loginShowPassword ? 'Ocultar' : 'Mostrar'}</button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="auth-login-options flex items-center justify-between gap-2">
                 <input type="checkbox" id="remember" className="w-4 h-4 rounded accent-emerald-500" />
-                <label htmlFor="remember" className="text-sm font-medium text-slate-300">Recuérdame</label>
+                <label htmlFor="remember" className="text-sm font-medium">Recuérdame</label>
               </div>
-              <button className={`w-full rounded-xl px-6 py-4 font-bold text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-lg ${loginValid ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 hover:shadow-xl hover:shadow-emerald-600/40 hover:scale-105 active:scale-95' : 'bg-slate-700/40 cursor-not-allowed'}`} type="button" onClick={login} disabled={!loginValid}>
-                🚀 Entrar a INARA
+              <button className={`auth-button w-full rounded-xl px-6 py-4 font-bold text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-lg ${loginValid && !loginLoading ? '' : 'is-disabled'}`} type="button" onClick={login} disabled={!loginValid || loginLoading}>
+                <span className={`auth-button__icon ${loginLoading ? 'auth-button__icon--loading' : ''}`} aria-hidden="true">{loginLoading ? '◌' : '🚀'}</span> {loginLoading ? 'Entrando...' : 'Entrar a INARA'}
               </button>
-              <p className="text-center text-xs text-slate-400">¿Olvidaste tu contraseña? <a href="#" className="font-bold text-emerald-400 hover:text-emerald-300 transition">Recupérala aquí</a></p>
+              <p className="auth-recovery text-center text-xs"><a href="#" className="font-bold transition">¿Olvidaste tu contraseña? Recupérala aquí</a></p>
+              <p className="auth-muted text-center text-xs">¿No tienes una cuenta? <a href="#" className="font-bold transition">Créala en la siguiente sección</a></p>
             </div>
           </div>
 
           {/* PANEL REGISTRO */}
-          <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 rounded-[2rem] p-8 border border-violet-500/20 backdrop-blur shadow-2xl hover:border-violet-500/40 transition-all">
+          <div className="auth-card auth-card--form auth-card--register rounded-2xl p-6 sm:p-7 border transition-all">
             <div className="flex justify-center mb-6">
-              <div className="bg-violet-500/20 border border-violet-500/40 p-4 rounded-full">
-                <span className="text-5xl">👤</span>
+              <div className="auth-form-icon">
+                <span className="auth-emoji-icon">🧑‍🎓</span>
               </div>
             </div>
-            <h3 className="text-2xl font-bold text-center text-slate-100 mb-1">Crear cuenta</h3>
-            <p className="text-center text-slate-400 mb-6 font-medium text-sm">Registrate y comienza tu viaje</p>
+            <div className="auth-card-kicker">EMPIEZA TU VIAJE</div>
+            <h3 className="text-2xl font-bold text-center mb-1">Comienza tu camino</h3>
+            <p className="text-center mb-5 font-medium text-sm">Crea tu cuenta y empieza a construir tu progreso.</p>
             
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">👤 Nombre</label>
+                  <label className="auth-label block text-xs font-bold mb-1"><span className="auth-field-icon" aria-hidden="true">👤</span> Nombre</label>
                   <input className="w-full rounded-lg border border-slate-600 px-3 py-2 font-medium focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 bg-slate-700/50 text-slate-100 placeholder-slate-500 transition-all" placeholder="Juan" value={registerForm.firstName} onChange={(event) => setRegisterForm({ ...registerForm, firstName: event.target.value })} />
                   {registerForm.firstName.trim().length === 0 && <p className="mt-1 text-xs text-red-400">Campo requerido</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">👤 Apellido</label>
+                  <label className="auth-label block text-xs font-bold mb-1"><span className="auth-field-icon" aria-hidden="true">👤</span> Apellido</label>
                   <input className="w-full rounded-lg border border-slate-600 px-3 py-2 font-medium focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 bg-slate-700/50 text-slate-100 placeholder-slate-500 transition-all" placeholder="Pérez" value={registerForm.lastName} onChange={(event) => setRegisterForm({ ...registerForm, lastName: event.target.value })} />
                   {registerForm.lastName.trim().length === 0 && <p className="mt-1 text-xs text-red-400">Campo requerido</p>}
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">📧 Correo electrónico</label>
+                <label className="auth-label block text-xs font-bold mb-1"><span className="auth-field-icon" aria-hidden="true">📧</span> Correo electrónico</label>
                 <input className={`w-full rounded-lg border px-3 py-2 font-medium transition-all ${validateEmail(registerForm.email) ? 'border-violet-500 focus:ring-violet-500/30 bg-slate-700/50 text-slate-100' : 'border-red-400 bg-slate-700/50 text-slate-100'}`} placeholder="tu@email.com" value={registerForm.email} onChange={(event) => setRegisterForm({ ...registerForm, email: event.target.value })} />
                 {!validateEmail(registerForm.email) && registerForm.email.length > 0 && <p className="mt-1 text-xs text-red-400">Formato de correo inválido</p>}
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">🔒 Contraseña</label>
+                <label className="auth-label block text-xs font-bold mb-1"><span className="auth-field-icon" aria-hidden="true">🔒</span> Contraseña</label>
                 <div className="relative">
                   <input className={`w-full rounded-lg border px-3 py-2 font-medium transition-all ${registerForm.password.length >= 8 ? 'border-violet-500 focus:ring-violet-500/30 bg-slate-700/50 text-slate-100' : 'border-red-400 bg-slate-700/50 text-slate-100'}`} type={registerShowPassword ? 'text' : 'password'} placeholder="••••••••" value={registerForm.password} onChange={(event) => setRegisterForm({ ...registerForm, password: event.target.value })} />
                   <button type="button" className="absolute right-3 top-2 text-xs text-slate-300" onClick={() => setRegisterShowPassword((v) => !v)}>{registerShowPassword ? 'Ocultar' : 'Mostrar'}</button>
@@ -239,21 +251,20 @@ export default function Auth({ onSession }) {
                 {registerForm.password.length > 0 && registerForm.password.length < 8 && <p className="mt-1 text-xs text-red-400">La contraseña debe tener al menos 8 caracteres</p>}
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">🔒 Confirmar contraseña</label>
+                <label className="auth-label block text-xs font-bold mb-1"><span className="auth-field-icon" aria-hidden="true">🔒</span> Confirmar contraseña</label>
                 <input className={`w-full rounded-lg border px-3 py-2 font-medium transition-all ${registerForm.confirmPassword === registerForm.password ? 'border-violet-500 bg-slate-700/50 text-slate-100' : 'border-red-400 bg-slate-700/50 text-slate-100'}`} type={registerShowPassword ? 'text' : 'password'} placeholder="••••••••" value={registerForm.confirmPassword} onChange={(event) => setRegisterForm({ ...registerForm, confirmPassword: event.target.value })} />
                 {registerForm.confirmPassword.length > 0 && registerForm.confirmPassword !== registerForm.password && <p className="mt-1 text-xs text-red-400">Las contraseñas no coinciden</p>}
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">👥 Rol</label>
+                <label className="auth-label block text-xs font-bold mb-1"><span className="auth-field-icon" aria-hidden="true">🎓</span> Rol</label>
                 <select className="w-full rounded-lg border border-slate-600 px-3 py-2 font-medium focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 bg-slate-700/50 text-slate-100 transition-all" value={registerForm.role} onChange={(event) => setRegisterForm({ ...registerForm, role: event.target.value })}>
                   <option value="student" className="bg-slate-800">👨‍🎓 Estudiante</option>
                   <option value="instructor" className="bg-slate-800">👨‍🏫 Docente</option>
-                  <option value="admin" className="bg-slate-800">⚙️ Administrador</option>
                   <option value="parent" className="bg-slate-800">👪 Padre/Tutor</option>
                 </select>
               </div>
-              <button className={`w-full rounded-lg px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 ${registerValid ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:shadow-xl hover:shadow-violet-600/40 hover:scale-105 active:scale-95' : 'bg-slate-700/40 cursor-not-allowed'}`} type="button" onClick={register} disabled={!registerValid}>
-                ✨ Crear cuenta
+              <button className={`auth-button w-full rounded-lg px-4 py-3 font-bold text-white shadow-lg transition-all duration-300 ${registerValid && !registerLoading ? '' : 'is-disabled'}`} type="button" onClick={register} disabled={!registerValid || registerLoading}>
+                <span className={`auth-button__icon ${registerLoading ? 'auth-button__icon--loading' : ''}`} aria-hidden="true">{registerLoading ? '◌' : '✨'}</span> {registerLoading ? 'Creando...' : 'Crear cuenta'}
               </button>
               <p className="text-center text-xs text-slate-400">¿Ya tienes cuenta? <a href="#" className="font-bold text-violet-400 hover:text-violet-300 transition">Inicia aquí</a></p>
             </div>
@@ -262,13 +273,9 @@ export default function Auth({ onSession }) {
       </div>
 
       {/* FOOTER BAJO PANELES */}
-      <footer className="mt-8 max-w-7xl mx-auto text-center text-sm text-slate-400">
-        <div className="py-4 border-t border-emerald-500/10">
-          <a href="/help" className="mx-3 hover:text-emerald-300">Ayuda</a>
-          <a href="/terms" className="mx-3 hover:text-emerald-300">Términos</a>
-          <a href="/privacy" className="mx-3 hover:text-emerald-300">Privacidad</a>
-          <a href="/contact" className="mx-3 hover:text-emerald-300">Contacto</a>
-        </div>
+      <footer className="auth-footer max-w-5xl mx-auto text-center">
+        <p className="auth-footer__security">Centro Tecnológico Bidkar Muñoz · Granada</p>
+        <p className="auth-footer__institution"><span className="auth-footer__author">Colonial Code</span> · <span className="auth-footer__brand">INARA</span> · <span className="auth-footer__copyright">© 2026</span></p>
       </footer>
 
     </div>

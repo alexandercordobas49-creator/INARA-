@@ -12,13 +12,45 @@ import xpRoutes from './routes/xpRoutes.js';
 import alertsRoutes from './routes/alertsRoutes.js';
 import competencyRoutes from './routes/competencyRoutes.js';
 import courseStudentRoutes from './routes/courseStudentRoutes.js';
-
+import riskRoutes from './routes/riskRoutes.js';
+import { checkDatabase } from './config/database.js';
 
 const app = express();
 
+const configuredOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = new Set(
+  configuredOrigins.length
+    ? configuredOrigins
+    : process.env.NODE_ENV === 'production'
+      ? []
+      : ['http://localhost:5173', 'http://127.0.0.1:5173']
+);
 
-app.use(cors());
-app.use(express.json());
+const configuredProxyHops = process.env.TRUST_PROXY_HOPS;
+const trustProxyHops = process.env.VERCEL === '1'
+  ? 1
+  : configuredProxyHops
+    ? Number(configuredProxyHops)
+    : 0;
+
+if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0) {
+  throw new Error('TRUST_PROXY_HOPS must be a non-negative integer.');
+}
+
+app.set('trust proxy', trustProxyHops || false);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+  maxAge: 600
+}));
+app.use(express.json({ limit: '1mb' }));
 
 
 // Ruta principal de la API
@@ -31,12 +63,31 @@ app.get('/', (req, res) => {
 });
 
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    service: 'INARA API'
-  });
+// Readiness check: reports database connectivity and required schema separately.
+app.get('/api/health', async (req, res) => {
+  try {
+    const { databaseConnected, schemaAvailable } = await checkDatabase();
+    const ready = databaseConnected && schemaAvailable;
+
+    return res.status(ready ? 200 : 503).json({
+      ok: ready,
+      service: 'INARA API',
+      server: 'running',
+      database: databaseConnected ? 'connected' : 'unavailable',
+      schema: schemaAvailable ? 'available' : 'unavailable'
+    });
+  } catch (error) {
+    console.error(
+      `Database health check failed${error.code ? ` (${error.code})` : ''}.`
+    );
+    return res.status(503).json({
+      ok: false,
+      service: 'INARA API',
+      server: 'running',
+      database: 'unavailable',
+      schema: 'unknown'
+    });
+  }
 });
 
 
@@ -52,6 +103,7 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/atlas', atlasRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/competency', competencyRoutes);
+app.use('/api/risk', riskRoutes);
 
 
 export default app;

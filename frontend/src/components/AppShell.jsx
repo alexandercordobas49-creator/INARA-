@@ -1,8 +1,28 @@
 import Sidebar from './Sidebar.jsx';
 import Toasts from './Toasts.jsx';
 import { ToastProvider } from '../contexts/ToastContext.jsx';
+import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { api } from '../api.js';
 
 export default function AppShell({ modules, activeModule, onSelectModule, session, onLogout, children }) {
+  const location = useLocation();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    api('/alerts/notifications').then((result) => setNotifications(result.notifications || [])).catch(() => setNotifications([]));
+  }, [session?.user?.id]);
+
+  async function markNotificationRead(id) {
+    try {
+      await api(`/alerts/notifications/${id}/read`, { method: 'PATCH' });
+      setNotifications((current) => current.map((notification) => notification.id === id ? { ...notification, isRead: true } : notification));
+    } catch (error) {
+      console.error(error);
+    }
+  }
   const icons = {
     auth: '🏠',
     roles: '👥',
@@ -19,26 +39,33 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
   if (session) {
     return (
       <ToastProvider>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-violet-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-violet-50 flex">
           <Sidebar 
             session={session} 
             onLogout={onLogout} 
           />
-          <main className="ml-56 min-h-screen">
-          <div className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]">
-            <div className="relative flex items-center justify-between px-6 py-5">
+          <main className="app-main min-w-0 flex-1 min-h-screen">
+          <div className="relative z-10 border-b border-slate-200/70 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]">
+            <div className="relative flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-4">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-500 bg-clip-text text-transparent">
-                    INARA
-                  </h1>
-                  <p className="text-sm sm:text-base text-slate-500 mt-2 max-w-md">
-                    Tu Camino Hacia el Exito
-                  </p>
+                  <img
+                    src="/assets/Logo-removebg-preview.png?v=20260915"
+                    alt="INARA"
+                    className="h-24 w-auto max-w-[32rem] max-h-24 shrink-0 object-contain object-left sm:h-24 sm:max-w-[32rem]"
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <button className="p-2 rounded-2xl hover:bg-slate-100 transition-all text-xl">🔔</button>
+                <div className="relative">
+                  <button type="button" aria-label="Ver notificaciones" onClick={() => setShowNotifications((visible) => !visible)} className="relative rounded-2xl p-2 text-xl transition-all hover:bg-slate-100">🔔
+                    {notifications.some((notification) => !notification.isRead) && <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-rose-500" />}
+                  </button>
+                  {showNotifications && <div className="absolute right-0 z-30 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-xl">
+                    <p className="px-2 pb-2 text-sm font-black text-slate-900">Notificaciones</p>
+                    {notifications.length === 0 ? <p className="px-2 py-3 text-sm text-slate-500">No tienes notificaciones nuevas.</p> : notifications.slice(0, 5).map((notification) => <button type="button" key={notification.id} onClick={() => markNotificationRead(notification.id)} className={`block w-full rounded-xl px-2 py-3 text-left text-sm hover:bg-emerald-50 ${notification.isRead ? 'text-slate-500' : 'font-semibold text-slate-800'}`}><span>{notification.message}</span><span className="mt-1 block text-xs uppercase text-slate-400">{notification.level}</span></button>)}
+                  </div>}
+                </div>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">
                   {session.user?.firstName?.[0]}{session.user?.lastName?.[0]}
                 </div>
@@ -46,7 +73,11 @@ export default function AppShell({ modules, activeModule, onSelectModule, sessio
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-emerald-300/40 via-slate-300/0 to-cyan-300/40" />
             </div>
           </div>
-          <div className="p-8">{children}</div>
+          <div className="app-main-content p-4 sm:p-6 lg:p-8">
+            <div key={location.pathname} className="route-enter-animation">
+              {children}
+            </div>
+          </div>
             <Toasts />
           </main>
         </div>

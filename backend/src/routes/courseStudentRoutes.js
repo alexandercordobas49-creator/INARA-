@@ -35,7 +35,7 @@ router.get(
 router.get(
     "/student/:id",
     authenticateToken,
-    authorizeRoles("admin", "instructor", "student"),
+authorizeRoles("admin", "instructor", "student", "parent"),
     listCoursesByStudent
 );
 

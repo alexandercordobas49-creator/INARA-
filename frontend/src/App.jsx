@@ -24,12 +24,21 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    if (!session) {
+      setUsers([]);
+      setCourses([]);
+      return;
+    }
+
     loadCatalogs();
-  }, [refreshKey]);
+  }, [refreshKey, session]);
 
   async function loadCatalogs() {
     try {
-      const [usersData, coursesData] = await Promise.all([api('/users'), api('/courses')]);
+      const [coursesData, usersData] = await Promise.all([
+        api('/courses'),
+        session.user?.role === 'admin' ? api('/users') : Promise.resolve([])
+      ]);
       setUsers(usersData);
       setCourses(coursesData);
     } catch (error) {
@@ -46,6 +55,7 @@ export default function App() {
   function logout() {
     setSession(null);
     localStorage.removeItem('INARA-session');
+    window.location.replace('/auth');
   }
 
   function reload() {
@@ -60,7 +70,7 @@ export default function App() {
     <BrowserRouter>
       <AppShell session={session} onLogout={logout}>
         <Routes>
-          <Route path="/auth" element={<Auth onSession={saveSession} />} />
+          <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <Auth onSession={saveSession} />} />
           <Route path="/dashboard" element={<Dashboard {...pageProps} />} />
           <Route path="/progress" element={<Progress {...pageProps} />} />
           <Route path="/courses" element={<Courses {...pageProps} />} />
