@@ -12,6 +12,7 @@ export async function findAllUsers() {
       current_level AS "currentLevel",
       created_at AS "createdAt"
     FROM users
+    WHERE LOWER(email) NOT LIKE '%.demo'
     ORDER BY created_at DESC
   `);
   return result.rows;
