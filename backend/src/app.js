@@ -149,4 +149,57 @@ app.get('/api/technological-centers/summary', async (_req, res) => {
 });
 
 
+// Live platform metrics: only real accounts and records without demo markers.
+app.get('/api/platform/metrics', async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (SELECT COUNT(*)::int FROM users
+          WHERE role = 'student' AND LOWER(email) NOT LIKE '%.demo') AS students,
+        (SELECT COUNT(*)::int FROM technological_centers WHERE is_active = true) AS centers,
+        (SELECT COUNT(DISTINCT c.id)::int
+          FROM courses c
+          JOIN course_students cs ON cs.course_id = c.id AND cs.enrollment_status = 'active'
+          JOIN users u ON u.id = cs.student_id
+          WHERE u.role = 'student' AND LOWER(u.email) NOT LIKE '%.demo') AS courses,
+        (SELECT COALESCE(SUM(x.points), 0)::int
+          FROM xp_events x JOIN users u ON u.id = x.user_id
+          WHERE u.role = 'student' AND LOWER(u.email) NOT LIKE '%.demo'
+            AND COALESCE(x.description, '') NOT ILIKE '%piloto%'
+            AND COALESCE(x.description, '') NOT ILIKE '%escenario%') AS xp,
+        (SELECT COUNT(*)::int
+          FROM attendance_records ar JOIN users u ON u.id = ar.user_id
+          WHERE u.role = 'student' AND LOWER(u.email) NOT LIKE '%.demo'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%') AS attendance_records,
+        (SELECT CASE WHEN COUNT(*) = 0 THEN 0
+          ELSE ROUND(COUNT(*) FILTER (WHERE ar.status IN ('present', 'late')) * 100.0 / COUNT(*))::int END
+          FROM attendance_records ar JOIN users u ON u.id = ar.user_id
+          WHERE u.role = 'student' AND LOWER(u.email) NOT LIKE '%.demo'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%') AS attendance_rate
+    `);
+    const metrics = result.rows[0];
+    return res.json({
+      source: 'PostgreSQL · cuentas y registros reales; cuentas .demo y registros de prueba excluidos',
+      metrics: [
+        { icon: '👨‍🎓', label: 'Estudiantes registrados', value: metrics.students },
+        { icon: '🏫', label: 'Centros tecnológicos registrados', value: metrics.centers },
+        { icon: '📚', label: 'Cursos con matrícula real', value: metrics.courses },
+        { icon: '⭐', label: 'XP de actividad real', value: metrics.xp },
+        { icon: '📝', label: 'Asistencias reales', value: metrics.attendance_records },
+        { icon: '📈', label: 'Asistencia efectiva', value: metrics.attendance_rate, suffix: '%' }
+      ]
+    });
+  } catch (error) {
+    console.error('Unable to load live platform metrics.', error.code || '');
+    return res.status(500).json({ message: 'No se pudieron cargar las métricas reales.' });
+  }
+});
+
+
 export default app;
