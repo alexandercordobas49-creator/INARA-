@@ -33,13 +33,17 @@ async function getStudentDashboard(userId) {
   const student = studentResult.rows[0];
   if (!student) return null;
 
-  const [attendance, achievements, xpEvents, streak, nextLevel] = await Promise.all([
+  const [attendance, achievements, xpEvents, streak, xpSummary] = await Promise.all([
     pool.query(`
       SELECT COUNT(*)::int AS total,
              COUNT(*) FILTER (WHERE status='present')::int AS present,
              COUNT(*) FILTER (WHERE status='late')::int AS late,
              COUNT(*) FILTER (WHERE status='absent')::int AS absent
       FROM attendance_records WHERE user_id=$1
+        AND COALESCE(notes, '') NOT ILIKE '%demostrativo%'
+        AND COALESCE(notes, '') NOT ILIKE '%ejemplo%'
+        AND COALESCE(notes, '') NOT ILIKE '%seguimiento formativo%'
+        AND COALESCE(notes, '') NOT ILIKE '%escenario piloto%'
     `, [userId]),
     pool.query(`
       SELECT ua.id, ua.user_id AS "userId", ua.achievement_id AS "achievementId",
@@ -47,28 +51,50 @@ async function getStudentDashboard(userId) {
              a.xp_reward AS "xpReward"
       FROM user_achievements ua
       JOIN achievements a ON a.id=ua.achievement_id
-      WHERE ua.user_id=$1 ORDER BY ua.earned_at DESC
+      WHERE ua.user_id=$1 AND a.code NOT IN ('first-attendance', 'streak-5', 'pilot-20') ORDER BY ua.earned_at DESC
     `, [userId]),
     pool.query(`
       SELECT id, user_id AS "userId", points, source, description, created_at AS "createdAt"
-      FROM xp_events WHERE user_id=$1 ORDER BY created_at DESC LIMIT 6
+      FROM xp_events WHERE user_id=$1
+        AND COALESCE(description, '') NOT ILIKE '%piloto%'
+        AND COALESCE(description, '') NOT ILIKE '%escenario%'
+      ORDER BY created_at DESC LIMIT 6
     `, [userId]),
     pool.query(`
       SELECT id, user_id AS "userId", course_id AS "courseId",
              current_count AS "currentCount", best_count AS "bestCount",
              last_activity_date AS "lastActivityDate", updated_at AS "updatedAt"
-      FROM streaks WHERE user_id=$1 ORDER BY updated_at DESC LIMIT 1
+      FROM streaks s WHERE user_id=$1
+        AND EXISTS (
+          SELECT 1 FROM attendance_records ar
+          WHERE ar.user_id=s.user_id AND ar.course_id=s.course_id
+            AND COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+            AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%'
+        )
+      ORDER BY updated_at DESC LIMIT 1
     `, [userId]),
     pool.query(`
-      SELECT level_number AS "levelNumber", name, min_xp AS "minXp"
-      FROM levels WHERE min_xp > $1 ORDER BY min_xp LIMIT 1
-    `, [student.total_xp])
+      SELECT COALESCE(SUM(points), 0)::int AS total_xp
+      FROM xp_events
+      WHERE user_id=$1
+        AND COALESCE(description, '') NOT ILIKE '%piloto%'
+        AND COALESCE(description, '') NOT ILIKE '%escenario%'
+    `, [userId])
   ]);
 
+  const realXp = Number(xpSummary.rows[0]?.total_xp || 0);
+  const [currentLevelResult, nextLevelResult] = await Promise.all([
+    pool.query('SELECT level_number AS "levelNumber" FROM levels WHERE min_xp <= $1 ORDER BY min_xp DESC LIMIT 1', [realXp]),
+    pool.query('SELECT level_number AS "levelNumber", name, min_xp AS "minXp" FROM levels WHERE min_xp > $1 ORDER BY min_xp LIMIT 1', [realXp])
+  ]);
+  const realStudent = { ...student, total_xp: realXp, current_level: currentLevelResult.rows[0]?.levelNumber ?? 1 };
+
   return {
-    student: publicUser(student),
+    student: publicUser(realStudent),
     attendanceSummary: attendance.rows[0],
-    xp: { total: student.total_xp, currentLevel: student.current_level, nextLevel: nextLevel.rows[0] || null },
+    xp: { total: realXp, currentLevel: realStudent.current_level, nextLevel: nextLevelResult.rows[0] || null },
     streak: streak.rows[0] || null,
     achievements: achievements.rows,
     xpEvents: xpEvents.rows
