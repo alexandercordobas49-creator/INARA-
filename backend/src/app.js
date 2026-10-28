@@ -12,6 +12,7 @@ import xpRoutes from './routes/xpRoutes.js';
 import alertsRoutes from './routes/alertsRoutes.js';
 import competencyRoutes from './routes/competencyRoutes.js';
 import courseStudentRoutes from './routes/courseStudentRoutes.js';
+import technologicalCenterRoutes from './routes/technologicalCenterRoutes.js';
 
 
 const app = express();
@@ -52,6 +53,7 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/atlas', atlasRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/competency', competencyRoutes);
+app.use('/api/technological-centers', technologicalCenterRoutes);
 
 
 export default app;

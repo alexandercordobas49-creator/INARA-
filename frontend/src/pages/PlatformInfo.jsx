@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './PlatformInfo.css';
+import TechnologicalCentersMap from '../components/TechnologicalCentersMap.jsx';
 
 function AnimatedCounter({ value, suffix = '' }) {
   const [count, setCount] = useState(0);
@@ -188,63 +189,7 @@ export default function PlatformInfo() {
         </div>
       </section>
 
-      <section className="mt-10 grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
-        <div className="platform-map-card p-8">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">Impacto Nacional</p>
-                <h2 className="mt-3 text-3xl font-black text-slate-950">Mapa de Nicaragua</h2>
-              </div>
-              <div className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">Departamentos interactivos</div>
-            </div>
-            <p className="max-w-2xl text-slate-600">Selecciona un departamento para explorar el alcance local de INARA en tiempos de demostración.</p>
-          </div>
-
-          <div className="mt-8">
-            <svg viewBox="0 0 360 260" className="platform-map-view" preserveAspectRatio="xMidYMid meet">
-              {departments.map((dept) => (
-                <g key={dept.id} onMouseEnter={() => setActiveDept(dept.id)} className={`platform-map-dot ${activeDept === dept.id ? 'active' : ''}`}>
-                  <circle cx={dept.cx} cy={dept.cy} r="18" fill={activeDept === dept.id ? '#22c55e' : '#ffffff'} stroke="#16a34a" strokeWidth="3" opacity={activeDept === dept.id ? '1' : '0.92'} />
-                  <text x={dept.cx} y={dept.cy + 5} textAnchor="middle" fontSize="11" fontWeight="700" fill={activeDept === dept.id ? '#ffffff' : '#0f172a'}>{dept.name.charAt(0)}</text>
-                </g>
-              ))}
-            </svg>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="platform-card p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">Detalle por departamento</p>
-            <h3 className="mt-4 text-2xl font-black text-slate-950">{activeDepartment.name}</h3>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Estudiantes</p>
-                <p className="mt-3 text-3xl font-black text-slate-950">{activeDepartment.students}</p>
-              </div>
-              <div className="rounded-3xl bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Centros</p>
-                <p className="mt-3 text-3xl font-black text-slate-950">{activeDepartment.centers}</p>
-              </div>
-              <div className="rounded-3xl bg-slate-50 p-5 sm:col-span-2">
-                <p className="text-sm text-slate-500">Asistencia</p>
-                <p className="mt-3 text-3xl font-black text-slate-950">{activeDepartment.attendance}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="platform-card p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">¿Qué es INARA?</p>
-            <h3 className="mt-4 text-2xl font-black text-slate-950">INARA es un ecosistema educativo inteligente</h3>
-            <p className="mt-5 text-slate-600 leading-8">
-              INARA es un ecosistema educativo inteligente desarrollado para fortalecer el aprendizaje mediante inteligencia artificial, seguimiento académico, análisis predictivo y gamificación.
-            </p>
-            <p className="mt-4 text-slate-600 leading-8">
-              Su propósito es reducir la deserción estudiantil, mejorar el rendimiento académico y ofrecer herramientas innovadoras tanto para estudiantes como para docentes.
-            </p>
-          </div>
-        </div>
-      </section>
+      <TechnologicalCentersMap />
 
       <section className="mt-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
