@@ -13,7 +13,7 @@ import alertsRoutes from './routes/alertsRoutes.js';
 import competencyRoutes from './routes/competencyRoutes.js';
 import courseStudentRoutes from './routes/courseStudentRoutes.js';
 import riskRoutes from './routes/riskRoutes.js';
-import { checkDatabase } from './config/database.js';
+import { checkDatabase, pool } from './config/database.js';
 
 const app = express();
 
@@ -104,6 +104,44 @@ app.use('/api/atlas', atlasRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/competency', competencyRoutes);
 app.use('/api/risk', riskRoutes);
+
+// Public summary for the interactive INATEC map. Only centers registered in
+// the database are counted; a department with zero records is not evidence
+// that it has no INATEC center.
+app.get('/api/technological-centers/summary', async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        department,
+        COUNT(*)::int AS total,
+        json_agg(
+          json_build_object(
+            'name', name,
+            'municipality', municipality,
+            'address', address,
+            'latitude', latitude,
+            'longitude', longitude,
+            'programs', programs,
+            'website', website,
+            'dataSourceUrl', data_source_url,
+            'verifiedAt', verified_at
+          ) ORDER BY name
+        ) AS centers
+      FROM public.technological_centers
+      WHERE is_active = true
+      GROUP BY department
+      ORDER BY department
+    `);
+    return res.json({
+      source: 'INARA PostgreSQL · technological_centers',
+      dataStatus: 'database_records',
+      departments: result.rows
+    });
+  } catch (error) {
+    console.error('Unable to load technological center summary.', error.code || '');
+    return res.status(500).json({ message: 'No se pudo cargar el directorio de centros tecnológicos.' });
+  }
+});
 
 
 export default app;
