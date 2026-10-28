@@ -321,6 +321,7 @@ export default function PlatformInfo() {
   const [modal, setModal] = useState(null);
   const [centerDepartments, setCenterDepartments] = useState([]);
   const [centerDataStatus, setCenterDataStatus] = useState("loading");
+  const [centerSearch, setCenterSearch] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -374,6 +375,24 @@ export default function PlatformInfo() {
     [centerDepartments, activeDepartment.name],
   );
   const activeCenters = activeCenterGroup?.centers || [];
+  const allCenters = useMemo(
+    () => centerDepartments.flatMap((group) =>
+      (Array.isArray(group.centers) ? group.centers : []).map((center) => ({
+        ...center,
+        department: group.department,
+      }))
+    ),
+    [centerDepartments],
+  );
+  const displayedCenters = useMemo(() => {
+    const query = centerSearch.trim().toLocaleLowerCase("es");
+    if (!query) return activeCenters.map((center) => ({ ...center, department: activeDepartment.name }));
+    return allCenters.filter((center) =>
+      [center.name, center.department, center.municipality, center.address, ...(Array.isArray(center.programs) ? center.programs : [])]
+        .filter(Boolean)
+        .some((value) => String(value).toLocaleLowerCase("es").includes(query))
+    );
+  }, [activeCenters, activeDepartment.name, allCenters, centerSearch]);
   const selectedFlowStep = useMemo(
     () => flowSteps.find((step) => step.id === selectedFlow) || flowSteps[0],
     [selectedFlow],
@@ -651,7 +670,7 @@ export default function PlatformInfo() {
               </div>
 
               <p className="max-w-2xl text-slate-600">
-                Selecciona un departamento para consultar los centros tecnológicos INATEC registrados en la base de datos de INARA. El mapa se alimenta desde PostgreSQL y muestra los registros disponibles, no estimaciones nacionales.
+                Selecciona un departamento en el mapa o busca un centro por nombre, municipio o especialidad. Cada ficha muestra únicamente la información disponible en PostgreSQL y enlaza a su fuente oficial cuando está registrada.
               </p>
             </div>
 
@@ -702,24 +721,59 @@ export default function PlatformInfo() {
                 </div>
 
                 <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-emerald-50 p-5 sm:col-span-2 border border-emerald-200">
-                  <p className="text-sm font-semibold text-emerald-700">
-                    Directorio de centros tecnológicos
-                  </p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-semibold text-emerald-700">
+                      Directorio de centros tecnológicos
+                    </p>
+                    {centerDataStatus === "loaded" ? (
+                      <span className="text-xs font-semibold text-slate-500">{allCenters.length} centros en el registro nacional de INARA</span>
+                    ) : null}
+                  </div>
+                  {centerDataStatus === "loaded" ? (
+                    <label className="mt-4 block">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">Buscar por centro, municipio o especialidad</span>
+                      <input
+                        type="search"
+                        value={centerSearch}
+                        onChange={(event) => setCenterSearch(event.target.value)}
+                        placeholder="Ej. Granada, Nandaime, Computación…"
+                        className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      />
+                    </label>
+                  ) : null}
                   {centerDataStatus === "loading" ? (
                     <p className="mt-3 text-sm text-slate-600">Consultando PostgreSQL…</p>
                   ) : centerDataStatus === "unavailable" ? (
                     <p className="mt-3 text-sm text-amber-800">No fue posible consultar la base de datos. Intenta recargar la página.</p>
-                  ) : activeCenters.length ? (
+                  ) : displayedCenters.length ? (
                     <ul className="mt-3 space-y-3">
-                      {activeCenters.map((center) => (
-                        <li key={center.name} className="rounded-2xl border border-emerald-100 bg-white p-4">
-                          <p className="font-bold text-slate-900">{center.name}</p>
-                          <p className="mt-1 text-sm text-slate-600">{center.municipality}{center.address ? ` · ${center.address}` : ""}</p>
+                      {displayedCenters.map((center) => (
+                        <li key={`${center.department}-${center.name}`} className="rounded-2xl border border-emerald-100 bg-white p-4">
+                          <button
+                            type="button"
+                            className="text-left font-bold text-slate-900 underline decoration-emerald-200 underline-offset-4 hover:text-emerald-800"
+                            onClick={() => {
+                              const target = departments.find((dept) => dept.name.localeCompare(center.department, "es", { sensitivity: "base" }) === 0);
+                              if (target) {
+                                setActiveDept(target.id);
+                                setActiveMapPath(target.mapPath);
+                              }
+                            }}
+                          >{center.name}</button>
+                          <p className="mt-1 text-sm font-medium text-emerald-800">{center.municipality || "Municipio no registrado"} · {center.department}</p>
+                          <p className="mt-1 text-sm text-slate-600">{center.address || "Dirección detallada pendiente de verificar en la ficha oficial."}</p>
                           {Array.isArray(center.programs) && center.programs.length > 0 ? (
-                            <p className="mt-2 text-sm text-emerald-800">Oferta registrada: {center.programs.join(", ")}</p>
-                          ) : null}
+                            <div className="mt-3">
+                              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Especialidades y oferta registrada</p>
+                              <ul className="mt-1 flex flex-wrap gap-2">
+                                {center.programs.map((program) => <li key={program} className="rounded-full bg-emerald-50 px-3 py-1 text-xs text-emerald-900">{program}</li>)}
+                              </ul>
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-sm text-slate-500">Especialidades: aún no registradas en INARA; consulta la fuente oficial para evitar mostrar información no verificada.</p>
+                          )}
                           {center.dataSourceUrl ? (
-                            <a className="mt-2 inline-block text-sm font-semibold text-emerald-700 underline" href={center.dataSourceUrl} target="_blank" rel="noreferrer">Ver fuente del registro</a>
+                            <a className="mt-3 inline-block text-sm font-semibold text-emerald-700 underline" href={center.dataSourceUrl} target="_blank" rel="noreferrer">Leer información oficial del centro ↗</a>
                           ) : null}
                         </li>
                       ))}
