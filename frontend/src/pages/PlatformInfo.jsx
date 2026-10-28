@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../components/Modal.jsx";
+import { api } from "../api.js";
 import "./PlatformInfo.css";
 
 function AnimatedCounter({ value, suffix = "" }) {
@@ -369,6 +370,23 @@ export default function PlatformInfo() {
   const [activeMapPath, setActiveMapPath] = useState("NIMN");
   const [selectedFlow, setSelectedFlow] = useState(flowSteps[0].id);
   const [modal, setModal] = useState(null);
+  const [centerDepartments, setCenterDepartments] = useState([]);
+  const [centerDataStatus, setCenterDataStatus] = useState("loading");
+
+  useEffect(() => {
+    let mounted = true;
+    api("/technological-centers/summary")
+      .then((data) => {
+        if (!mounted) return;
+        setCenterDepartments(Array.isArray(data?.departments) ? data.departments : []);
+        setCenterDataStatus("loaded");
+      })
+      .catch((error) => {
+        console.error("No se pudo cargar el directorio INATEC:", error);
+        if (mounted) setCenterDataStatus("unavailable");
+      });
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -400,6 +418,13 @@ export default function PlatformInfo() {
     [activeDept],
   );
 
+  const activeCenterGroup = useMemo(
+    () => centerDepartments.find((item) =>
+      item.department.localeCompare(activeDepartment.name, "es", { sensitivity: "base" }) === 0
+    ),
+    [centerDepartments, activeDepartment.name],
+  );
+  const activeCenters = activeCenterGroup?.centers || [];
   const selectedFlowStep = useMemo(
     () => flowSteps.find((step) => step.id === selectedFlow) || flowSteps[0],
     [selectedFlow],
@@ -677,8 +702,7 @@ export default function PlatformInfo() {
               </div>
 
               <p className="max-w-2xl text-slate-600">
-                Selecciona un departamento para explorar el alcance local de
-                INARA en tiempos de demostración.
+                Selecciona un departamento para consultar los centros tecnológicos INATEC registrados en la base de datos de INARA. El mapa se alimenta desde PostgreSQL y muestra los registros disponibles, no estimaciones nacionales.
               </p>
             </div>
 
@@ -730,11 +754,34 @@ export default function PlatformInfo() {
 
                 <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-emerald-50 p-5 sm:col-span-2 border border-emerald-200">
                   <p className="text-sm font-semibold text-emerald-700">
-                    Asistencia
+                    Directorio de centros tecnológicos
                   </p>
-
-                  <p className="mt-3 text-3xl font-black text-slate-950">
-                    {activeDepartment.attendance}
+                  {centerDataStatus === "loading" ? (
+                    <p className="mt-3 text-sm text-slate-600">Consultando PostgreSQL…</p>
+                  ) : centerDataStatus === "unavailable" ? (
+                    <p className="mt-3 text-sm text-amber-800">No fue posible consultar la base de datos. Intenta recargar la página.</p>
+                  ) : activeCenters.length ? (
+                    <ul className="mt-3 space-y-3">
+                      {activeCenters.map((center) => (
+                        <li key={center.name} className="rounded-2xl border border-emerald-100 bg-white p-4">
+                          <p className="font-bold text-slate-900">{center.name}</p>
+                          <p className="mt-1 text-sm text-slate-600">{center.municipality}{center.address ? ` · ${center.address}` : ""}</p>
+                          {Array.isArray(center.programs) && center.programs.length > 0 ? (
+                            <p className="mt-2 text-sm text-emerald-800">Oferta registrada: {center.programs.join(", ")}</p>
+                          ) : null}
+                          {center.dataSourceUrl ? (
+                            <a className="mt-2 inline-block text-sm font-semibold text-emerald-700 underline" href={center.dataSourceUrl} target="_blank" rel="noreferrer">Ver fuente del registro</a>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                      Todavía no hay centros de este departamento registrados en la base de datos de INARA. Esto no significa que INATEC no tenga presencia allí.
+                    </p>
+                  )}
+                  <p className="mt-4 text-xs leading-5 text-slate-500">
+                    Fuente de los conteos: PostgreSQL de INARA. El directorio se irá completando con registros verificables del Tecnológico Nacional (INATEC).
                   </p>
                 </div>
               </div>
