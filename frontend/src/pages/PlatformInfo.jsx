@@ -672,6 +672,36 @@ export default function PlatformInfo() {
               <p className="max-w-2xl text-slate-600">
                 Selecciona un departamento en el mapa o busca un centro por nombre, municipio o especialidad. Cada ficha muestra únicamente la información disponible en PostgreSQL y enlaza a su fuente oficial cuando está registrada.
               </p>
+
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-emerald-900">
+                      Directorio nacional INATEC
+                    </p>
+                    <p className="mt-1 text-sm text-emerald-800">
+                      {centerDataStatus === "loaded"
+                        ? `${allCenters.length} registros disponibles en INARA · meta oficial: 74 centros`
+                        : centerDataStatus === "unavailable"
+                          ? "No se pudo consultar PostgreSQL. La cifra del directorio no está disponible."
+                          : "Consultando registros del directorio…"}
+                    </p>
+                    {centerDataStatus === "loaded" && allCenters.length < 74 && (
+                      <p className="mt-1 text-xs text-emerald-800">
+                        Faltan ${74 - allCenters.length} registros para alcanzar la referencia nacional; algunos datos de contacto y ubicación siguen pendientes de verificación.
+                      </p>
+                    )}
+                  </div>
+                  <a
+                    href="https://www.tecnacional.edu.ni/centros-tecnologicos/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold text-emerald-800 underline"
+                  >
+                    Fuente oficial de INATEC ↗
+                  </a>
+                </div>
+              </div>
             </div>
 
             <div className="mt-8">
