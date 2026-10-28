@@ -133,9 +133,13 @@ app.get('/api/technological-centers/summary', async (_req, res) => {
       GROUP BY department
       ORDER BY department
     `);
+    const registeredCenters = result.rows.reduce((total, department) => total + department.total, 0);
     return res.json({
       source: 'INARA PostgreSQL · technological_centers',
       dataStatus: 'database_records',
+      registeredCenters,
+      officialDirectoryTotal: 74,
+      officialSourceUrl: 'https://www.tecnacional.edu.ni/centros-tecnologicos/',
       departments: result.rows
     });
   } catch (error) {
