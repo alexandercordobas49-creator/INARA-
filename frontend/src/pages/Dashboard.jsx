@@ -61,7 +61,7 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
     );
   }
 
-  if (error && !dashboard) return <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900"><h2 className="font-bold">No pudimos cargar los datos de Valeria</h2><p className="mt-2 text-sm">{error}</p><p className="mt-2 text-sm">Verifica que la cuenta esté registrada y que el panel pueda consultar PostgreSQL.</p></div>;
+  if (error && !dashboard) return <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900"><h2 className="font-bold">No pudimos cargar los datos del estudiante</h2><p className="mt-2 text-sm">{error}</p><p className="mt-2 text-sm">Verifica que la cuenta esté registrada y que el panel pueda consultar PostgreSQL.</p></div>;
 
   const xpTotal = dashboard?.xp?.total ?? 0;
   const currentLevel = dashboard?.xp?.currentLevel ?? 1;
@@ -82,7 +82,7 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-5xl font-extrabold text-neutral-900">
-          ¡Bienvenida de nuevo, {selectedStudent.firstName || selectedStudent.first_name || 'Valeria'}! 👋
+          ¡Bienvenido de nuevo, {selectedStudent.firstName || selectedStudent.first_name || 'estudiante'}! 👋
         </h1>
         <p className="text-neutral-500 text-lg">
           Cada paso que das hoy, te acerca al futuro que sueñas.
