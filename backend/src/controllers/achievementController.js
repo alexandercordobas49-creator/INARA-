@@ -40,6 +40,7 @@ export async function achievementSummary(req, res) {
           description,
           xp_reward AS "xpReward"
         FROM achievements
+        WHERE code NOT IN ('first-attendance', 'streak-5', 'pilot-20')
         ORDER BY name
       `),
 
@@ -57,6 +58,7 @@ export async function achievementSummary(req, res) {
         JOIN achievements a
           ON a.id = ua.achievement_id
         WHERE ua.user_id = $1
+          AND a.code NOT IN ('first-attendance', 'streak-5', 'pilot-20')
         ORDER BY ua.earned_at DESC
       `, [userId]),
 
@@ -68,8 +70,16 @@ export async function achievementSummary(req, res) {
           best_count AS "bestCount",
           last_activity_date AS "lastActivityDate",
           updated_at AS "updatedAt"
-        FROM streaks
+        FROM streaks s
         WHERE user_id = $1
+          AND EXISTS (
+            SELECT 1 FROM attendance_records ar
+            WHERE ar.user_id = s.user_id AND ar.course_id = s.course_id
+              AND COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%'
+          )
         ORDER BY updated_at DESC
       `, [userId])
     ]);
