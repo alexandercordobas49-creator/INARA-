@@ -58,137 +58,86 @@ const departments = [
     id: "rio-san-juan",
     mapPath: "NISJ",
     name: "Río San Juan",
-    students: 76,
-    centers: 4,
-    attendance: "88%",
   },
   {
     id: "atlantico-norte",
     mapPath: "NIAN",
     name: "Atlántico Norte",
-    students: 98,
-    centers: 6,
-    attendance: "86%",
   },
   {
     id: "jinotega",
     mapPath: "NIJI",
     name: "Jinotega",
-    students: 112,
-    centers: 7,
-    attendance: "90%",
   },
   {
     id: "nueva-segovia",
     mapPath: "NINS",
     name: "Nueva Segovia",
-    students: 105,
-    centers: 6,
-    attendance: "91%",
   },
   {
     id: "chinandega",
     mapPath: "NICI",
     name: "Chinandega",
-    students: 128,
-    centers: 7,
-    attendance: "90%",
   },
   {
     id: "madriz",
     mapPath: "NIMD",
     name: "Madriz",
-    students: 84,
-    centers: 5,
-    attendance: "89%",
   },
   {
     id: "rivas",
     mapPath: "NIRI",
     name: "Rivas",
-    students: 92,
-    centers: 5,
-    attendance: "93%",
   },
   {
     id: "atlantico-sur",
     mapPath: "NIAS",
     name: "Atlántico Sur",
-    students: 87,
-    centers: 5,
-    attendance: "85%",
   },
   {
     id: "leon",
     mapPath: "NILE",
     name: "León",
-    students: 170,
-    centers: 7,
-    attendance: "91%",
   },
   {
     id: "managua",
     mapPath: "NIMN",
     name: "Managua",
-    students: 430,
-    centers: 18,
-    attendance: "92%",
   },
   {
     id: "carazo",
     mapPath: "NICA",
     name: "Carazo",
-    students: 108,
-    centers: 6,
-    attendance: "92%",
   },
   {
     id: "matagalpa",
     mapPath: "NIMT",
     name: "Matagalpa",
-    students: 145,
-    centers: 8,
-    attendance: "90%",
   },
   {
     id: "boaco",
     mapPath: "NIBO",
     name: "Boaco",
-    students: 82,
-    centers: 5,
-    attendance: "89%",
   },
   {
     id: "chontales",
     mapPath: "NICO",
     name: "Chontales",
-    students: 116,
-    centers: 6,
-    attendance: "90%",
   },
   {
     id: "esteli",
     mapPath: "NIES",
     name: "Estelí",
-    students: 134,
-    centers: 7,
-    attendance: "94%",
   },
   {
     id: "granada",
     mapPath: "NIGR",
     name: "Granada",
-    students: 150,
-    centers: 8,
-    attendance: "95%",
   },
   {
     id: "masaya",
     mapPath: "NIMS",
     name: "Masaya",
-    students: 120,
-    centers: 5,
-    attendance: "89%",
   },
 ];
 
@@ -740,15 +689,15 @@ export default function PlatformInfo() {
                   </p>
 
                   <p className="mt-3 text-3xl font-black text-slate-950">
-                    {new Set(activeCenters.map((center) => center.municipality)).size}
+                    {centerDataStatus === "loaded" ? new Set(activeCenters.map((center) => center.municipality).filter(Boolean)).size : "—"}
                   </p>
                 </div>
 
                 <div className="rounded-3xl bg-gradient-to-br from-cyan-50 to-sky-50 p-5 border border-cyan-200">
-                  <p className="text-sm font-semibold text-cyan-700">Centros</p>
+                  <p className="text-sm font-semibold text-cyan-700">Centros registrados</p>
 
                   <p className="mt-3 text-3xl font-black text-slate-950">
-                    {activeDepartment.centers}
+                    {centerDataStatus === "loaded" ? activeCenters.length : "—"}
                   </p>
                 </div>
 
@@ -781,7 +730,7 @@ export default function PlatformInfo() {
                     </p>
                   )}
                   <p className="mt-4 text-xs leading-5 text-slate-500">
-                    Fuente de los conteos: PostgreSQL de INARA. El directorio se irá completando con registros verificables del Tecnológico Nacional (INATEC).
+                    Fuente: PostgreSQL de INARA y fichas publicadas por el Tecnológico Nacional (INATEC). Las cifras representan únicamente los centros registrados en esta base de datos; no son un censo nacional completo.
                   </p>
                 </div>
               </div>
