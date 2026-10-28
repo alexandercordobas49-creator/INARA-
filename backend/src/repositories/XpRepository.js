@@ -44,6 +44,8 @@ const XpRepository = {
             SELECT *
             FROM xp_events
             WHERE user_id=$1
+              AND COALESCE(description, '') NOT ILIKE '%piloto%'
+              AND COALESCE(description, '') NOT ILIKE '%escenario%'
             ORDER BY created_at DESC
             `,
             [
@@ -64,6 +66,8 @@ const XpRepository = {
             SELECT COALESCE(SUM(points),0) AS total
             FROM xp_events
             WHERE user_id=$1
+              AND COALESCE(description, '') NOT ILIKE '%piloto%'
+              AND COALESCE(description, '') NOT ILIKE '%escenario%'
             `,
             [
                 userId
