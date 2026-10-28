@@ -34,17 +34,6 @@ function AnimatedCounter({ value, suffix = "" }) {
   );
 }
 
-const indicatorMetrics = [
-  { icon: "👨‍🎓", label: "Estudiantes registrados", value: 1250 },
-  { icon: "🏫", label: "Centros educativos", value: 24 },
-  { icon: "📚", label: "Cursos disponibles", value: 85 },
-  { icon: "ATLAS", label: "Consultas a Atlas IA", value: 18420 },
-  { icon: "🏆", label: "Logros desbloqueados", value: 7812 },
-  { icon: "⭐", label: "XP generada", value: 1245000 },
-  { icon: "🔥", label: "Rachas activas", value: 652 },
-  { icon: "📈", label: "Promedio asistencia", value: 93, suffix: "%" },
-];
-
 function PlatformMetricIcon({ icon }) {
   if (icon === "ATLAS") {
     return <img src="/assets/ATLAS.png" alt="Atlas IA" className="platform-metric-atlas" />;
@@ -322,6 +311,24 @@ export default function PlatformInfo() {
   const [centerDepartments, setCenterDepartments] = useState([]);
   const [centerDataStatus, setCenterDataStatus] = useState("loading");
   const [centerSearch, setCenterSearch] = useState("");
+  const [indicatorMetrics, setIndicatorMetrics] = useState([]);
+  const [metricsStatus, setMetricsStatus] = useState("loading");
+
+
+  useEffect(() => {
+    let mounted = true;
+    api("/platform/metrics")
+      .then((data) => {
+        if (!mounted) return;
+        setIndicatorMetrics(Array.isArray(data?.metrics) ? data.metrics : []);
+        setMetricsStatus("loaded");
+      })
+      .catch((error) => {
+        console.error("No se pudieron cargar las métricas reales:", error);
+        if (mounted) setMetricsStatus("unavailable");
+      });
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
