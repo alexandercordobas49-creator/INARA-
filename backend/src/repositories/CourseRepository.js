@@ -45,7 +45,7 @@ const CourseRepository = {
                 SELECT c.id, c.name, c.instructor_id, c.status, c.created_at
                 FROM courses c
                 JOIN course_students cs ON cs.course_id = c.id
-                WHERE cs.student_id = $1 AND cs.status = 'active'
+                WHERE cs.student_id = $1 AND cs.enrollment_status = 'active'
                 ORDER BY c.created_at DESC
             `;
             params = [user.id];
@@ -55,7 +55,7 @@ const CourseRepository = {
                 FROM courses c
                 JOIN course_students cs ON cs.course_id = c.id
                 JOIN parent_relations pr ON pr.child_id = cs.student_id
-                WHERE pr.parent_id = $1 AND cs.status = 'active'
+                WHERE pr.parent_id = $1 AND cs.enrollment_status = 'active'
                 ORDER BY c.created_at DESC
             `;
             params = [user.id];
@@ -66,7 +66,6 @@ const CourseRepository = {
         const result = await pool.query(query, params);
         return result.rows;
     },
-
 
 
     async findById(id) {
@@ -88,7 +87,6 @@ const CourseRepository = {
 
         return result.rows[0];
     },
-
 
 
     async create(course) {
@@ -123,7 +121,6 @@ const CourseRepository = {
     },
 
 
-
     async update(id, course) {
 
         const {
@@ -154,7 +151,6 @@ const CourseRepository = {
 
         return result.rows[0];
     },
-
 
 
     async delete(id) {
