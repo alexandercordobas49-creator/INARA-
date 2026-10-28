@@ -22,6 +22,9 @@ export async function login(req, res) {
 
   const user = await findUserByEmail(email);
 
+  if (process.env.NODE_ENV === 'production' && String(user?.email || '').toLowerCase().endsWith('.demo')) {
+    return res.status(403).json({ message: 'Las cuentas de demostración no están habilitadas en producción. Ingresa con una cuenta real.' });
+  }
 
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
 
