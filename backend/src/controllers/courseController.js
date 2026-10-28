@@ -6,7 +6,7 @@ export async function listCourses(req, res) {
 
   try {
 
-    const courses = await CourseRepository.findAll();
+    const courses = await CourseRepository.findVisibleTo(req.user);
 
     return res.json(courses);
 

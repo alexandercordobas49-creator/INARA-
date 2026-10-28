@@ -22,6 +22,51 @@ const CourseRepository = {
         return result.rows;
     },
 
+    async findVisibleTo(user) {
+        let query;
+        let params = [];
+
+        if (user.role === "admin") {
+            query = `
+                SELECT id, name, instructor_id, status, created_at
+                FROM courses
+                ORDER BY created_at DESC
+            `;
+        } else if (user.role === "instructor") {
+            query = `
+                SELECT id, name, instructor_id, status, created_at
+                FROM courses
+                WHERE instructor_id = $1
+                ORDER BY created_at DESC
+            `;
+            params = [user.id];
+        } else if (user.role === "student") {
+            query = `
+                SELECT c.id, c.name, c.instructor_id, c.status, c.created_at
+                FROM courses c
+                JOIN course_students cs ON cs.course_id = c.id
+                WHERE cs.student_id = $1 AND cs.status = 'active'
+                ORDER BY c.created_at DESC
+            `;
+            params = [user.id];
+        } else if (user.role === "parent") {
+            query = `
+                SELECT DISTINCT c.id, c.name, c.instructor_id, c.status, c.created_at
+                FROM courses c
+                JOIN course_students cs ON cs.course_id = c.id
+                JOIN parent_relations pr ON pr.child_id = cs.student_id
+                WHERE pr.parent_id = $1 AND cs.status = 'active'
+                ORDER BY c.created_at DESC
+            `;
+            params = [user.id];
+        } else {
+            return [];
+        }
+
+        const result = await pool.query(query, params);
+        return result.rows;
+    },
+
 
 
     async findById(id) {
