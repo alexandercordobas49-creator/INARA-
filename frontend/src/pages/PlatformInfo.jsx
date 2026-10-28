@@ -688,7 +688,7 @@ export default function PlatformInfo() {
                     </p>
                     {centerDataStatus === "loaded" && allCenters.length < 74 && (
                       <p className="mt-1 text-xs text-emerald-800">
-                        Faltan ${74 - allCenters.length} registros para alcanzar la referencia nacional; algunos datos de contacto y ubicación siguen pendientes de verificación.
+                        Faltan {74 - allCenters.length} registros para alcanzar la referencia nacional; algunos datos de contacto y ubicación siguen pendientes de verificación.
                       </p>
                     )}
                   </div>
