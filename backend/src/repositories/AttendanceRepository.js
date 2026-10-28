@@ -21,6 +21,10 @@ const AttendanceRepository = {
             FROM attendance_records ar
             JOIN users u ON u.id = ar.user_id
             JOIN courses c ON c.id = ar.course_id
+            WHERE COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%'
             ORDER BY ar.session_date DESC
             `
         );
@@ -40,6 +44,10 @@ const AttendanceRepository = {
             JOIN courses c
             ON c.id = ar.course_id
             WHERE ar.user_id = $1
+              AND COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%'
             ORDER BY ar.session_date DESC
             `,
             [userId]
@@ -58,6 +66,10 @@ const AttendanceRepository = {
             JOIN course_students cs ON cs.course_id = c.id AND cs.student_id = ar.user_id
             WHERE c.instructor_id = $1
               AND cs.enrollment_status = 'active'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%'
               ${studentFilter}
             ORDER BY ar.session_date DESC
         `, params);
@@ -73,6 +85,10 @@ const AttendanceRepository = {
             JOIN courses c ON c.id = ar.course_id
             JOIN parent_relations pr ON pr.child_id = ar.user_id
             WHERE pr.parent_id = $1
+              AND COALESCE(ar.notes, '') NOT ILIKE '%demostrativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%ejemplo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%seguimiento formativo%'
+              AND COALESCE(ar.notes, '') NOT ILIKE '%escenario piloto%'
               ${studentFilter}
             ORDER BY ar.session_date DESC
         `, params);
