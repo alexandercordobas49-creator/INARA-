@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// Use the same-origin Vercel API route. This prevents a stale or misconfigured
+// VITE_API_URL build variable from sending login requests to the wrong endpoint.
+const API_BASE = '/api';
 
 function getSession() {
   try {
