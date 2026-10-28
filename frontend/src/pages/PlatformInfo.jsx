@@ -762,6 +762,11 @@ export default function PlatformInfo() {
                           >{center.name}</button>
                           <p className="mt-1 text-sm font-medium text-emerald-800">{center.municipality || "Municipio no registrado"} · {center.department}</p>
                           <p className="mt-1 text-sm text-slate-600">{center.address || "Dirección detallada pendiente de verificar en la ficha oficial."}</p>
+                          {center.description ? (
+                            <p className="mt-3 text-sm leading-6 text-slate-700">{center.description}</p>
+                          ) : (
+                            <p className="mt-3 text-sm leading-6 text-slate-600">Información descriptiva pendiente de verificar. Consulta la ficha oficial del centro para conocer su enfoque formativo.</p>
+                          )}
                           {Array.isArray(center.programs) && center.programs.length > 0 ? (
                             <div className="mt-3">
                               <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Especialidades y oferta registrada</p>
