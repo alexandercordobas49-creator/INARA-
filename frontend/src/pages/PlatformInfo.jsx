@@ -220,29 +220,6 @@ const odsItems = [
   },
 ];
 
-const newsItems = [
-  {
-    title: "Innovatec Nicaragua",
-    description:
-      "INARA participa en el evento con nuevas demostraciones de Atlas IA.",
-  },
-  {
-    title: "Nuevos cursos",
-    description:
-      "Se agregaron 12 cursos enfocados en habilidades digitales y STEM.",
-  },
-  {
-    title: "Actualización Atlas IA",
-    description:
-      "Atlas ahora entrega recomendaciones más contextualizadas para cada estudiante.",
-  },
-  {
-    title: "Próximos eventos",
-    description:
-      "Sesiones de formación docente y talleres de aprendizaje adaptativo.",
-  },
-];
-
 const flowSteps = [
   {
     id: "registro",
@@ -609,8 +586,7 @@ export default function PlatformInfo() {
             </div>
 
             <p className="max-w-xl text-slate-600">
-              Datos simulados para este demo, listos para conectarse a la API de
-              métricas reales cuando el backend esté disponible.
+              Indicadores consultados en tiempo real desde PostgreSQL. Las cuentas de prueba y los registros demostrativos quedan excluidos.
             </p>
           </div>
 
@@ -1145,52 +1121,6 @@ export default function PlatformInfo() {
           </div>
         </section>
 
-        <section className="mt-10">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">
-                Noticias
-              </p>
-
-              <h2 className="platform-section-title mt-3 text-3xl text-slate-950">
-                Últimas novedades
-              </h2>
-            </div>
-
-            <p className="max-w-xl text-slate-600">
-              Mantente al día con los anuncios más importantes de INARA.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {newsItems.map((news) => (
-              <div
-                key={news.title}
-                className="platform-news-card p-6 border-t-4 border-t-emerald-500 hover:border-t-emerald-600"
-              >
-                <p className="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 w-fit px-3 py-1 rounded-full">
-                  Actualidad
-                </p>
-
-                <p className="mt-4 text-lg font-bold text-slate-950">
-                  {news.title}
-                </p>
-
-                <p className="mt-3 text-slate-600 leading-6">
-                  {news.description}
-                </p>
-
-                <div
-                  className="mt-4 flex items-center gap-2 text-sm text-emerald-600 font-semibold hover:text-emerald-700"
-                  onClick={handleViewAllEvents}
-                >
-                  Leer más →
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         <footer className="mt-16 border-t-2 border-emerald-200 pt-12 bg-gradient-to-b from-slate-50 to-slate-100 -mx-10 -mb-10 px-10 py-10">
           <div className="platform-footer-grid gap-6">
             <div className="platform-footer-card p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
@@ -1199,7 +1129,7 @@ export default function PlatformInfo() {
               </p>
 
               <p className="mt-3 text-xl font-bold text-slate-950">
-                1.0.0 Demo
+                INARA 2.0
               </p>
             </div>
 
