@@ -87,7 +87,6 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
         <p className="text-neutral-500 text-lg">
           Cada paso que das hoy, te acerca al futuro que sueñas.
         </p>
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Piloto demostrativo · historial simulado desde el 20 de junio de 2026</div>
       </div>
 
       {/* Progreso General */}
@@ -162,18 +161,18 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
         </div>
       </div>
 
-      {/* Historial de asistencia del piloto */}
+      {/* Historial de asistencia verificada */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Desde el 20 de junio de 2026</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Datos de PostgreSQL</p>
             <h2 className="mt-1 text-xl font-extrabold text-slate-900">Historial reciente de asistencia</h2>
-            <p className="mt-1 text-sm text-slate-500">Registros del escenario piloto guardados en PostgreSQL.</p>
+            <p className="mt-1 text-sm text-slate-500">Solo se muestran registros académicos que no están identificados como datos de prueba.</p>
           </div>
           <a href="/attendance" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">Ver historial completo →</a>
         </div>
         <div className="space-y-3">
-          {attendanceHistory.slice(0, 6).length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay asistencias registradas.</p> : attendanceHistory.slice(0, 6).map((record) => (
+          {attendanceHistory.slice(0, 6).length === 0 ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Aún no hay registros reales de asistencia para este estudiante.</p> : attendanceHistory.slice(0, 6).map((record) => (
             <div key={record.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
               <div>
                 <p className="font-semibold text-slate-900">{record.course_name}</p>
@@ -252,7 +251,7 @@ export default function Dashboard({ selectedStudent, session, courses = [] }) {
               <a href="#" className="text-xs text-emerald-600 font-semibold hover:underline">Ver toda la actividad</a>
             </div>
             <div className="space-y-3">
-              {xpEvents.slice(0, 3).map((event, idx) => ({ activity: event.description || 'Actividad registrada', points: event.points || 0, time: event.created_at ? new Date(event.created_at).toLocaleDateString('es-NI', { day: '2-digit', month: 'short' }) : 'Historial piloto' })).map((event, idx) => (
+              {xpEvents.slice(0, 3).map((event, idx) => ({ activity: event.description || 'Actividad registrada', points: event.points || 0, time: event.created_at ? new Date(event.created_at).toLocaleDateString('es-NI', { day: '2-digit', month: 'short' }) : 'Fecha no disponible' })).map((event, idx) => (
                 <div key={idx} className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{event.activity}</p>
