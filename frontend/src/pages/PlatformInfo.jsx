@@ -736,11 +736,11 @@ export default function PlatformInfo() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-cyan-50 p-5 border border-emerald-200">
                   <p className="text-sm font-semibold text-emerald-700">
-                    Estudiantes
+                    Municipios con centro registrado
                   </p>
 
                   <p className="mt-3 text-3xl font-black text-slate-950">
-                    {activeDepartment.students}
+                    {new Set(activeCenters.map((center) => center.municipality)).size}
                   </p>
                 </div>
 
