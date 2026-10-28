@@ -118,6 +118,7 @@ app.get('/api/technological-centers/summary', async (_req, res) => {
           json_build_object(
             'name', name,
             'municipality', municipality,
+            'description', description,
             'address', address,
             'latitude', latitude,
             'longitude', longitude,
