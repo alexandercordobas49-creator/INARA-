@@ -18,7 +18,7 @@ export async function listTechnologicalCenters(req, res) {
 
     if (search) {
       values.push(`%${String(search).trim().slice(0, 100)}%`);
-      conditions.push(`(name ILIKE $${values.length} OR department ILIKE $${values.length} OR municipality ILIKE $${values.length})`);
+      conditions.push(`(name ILIKE $${values.length} OR department ILIKE $${values.length} OR municipality ILIKE $${values.length} OR address ILIKE $${values.length})`);
     }
 
     const result = await pool.query(
